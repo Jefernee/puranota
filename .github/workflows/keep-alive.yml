@@ -1,0 +1,28 @@
+# Mantiene activo el proyecto de Supabase (plan gratuito pausa tras ~1 semana
+# de inactividad). Hace una consulta mínima al API REST cada 2 días.
+# Requiere los secrets del repo: SUPABASE_URL y SUPABASE_ANON_KEY.
+# Ver docs/keep-alive.md. Nota: GitHub desactiva los cron tras 60 días sin
+# actividad en el repo; para puro keep-alive, cron-job.org es más confiable.
+name: Keep Supabase alive
+
+on:
+  schedule:
+    - cron: '0 12 */2 * *' # cada 2 días, 12:00 UTC
+  workflow_dispatch: {} # permite dispararlo a mano
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping REST de Supabase
+        run: |
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/grupos?select=id&limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}")
+          echo "Respuesta del proyecto: HTTP $code"
+          # Cualquier respuesta HTTP significa que el proyecto está despierto.
+          if [ -z "$code" ] || [ "$code" = "000" ]; then
+            echo "No hubo respuesta del proyecto (¿pausado/caído?)." >&2
+            exit 1
+          fi

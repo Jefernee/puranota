@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Paleta en canales RGB (sin coma), para usarse con rgb(var(--x) / alpha).
+     Modo claro por defecto; el atributo data-theme="dark" en <html> la voltea. */
+  :root {
+    color-scheme: light;
+    --c-papel: 247 245 239; /* #F7F5EF */
+    --c-tinta: 38 36 31; /* #26241F */
+    --c-superficie: 255 255 255; /* blanco */
+    --c-pizarra: 23 107 77; /* #176B4D */
+    --c-guaria: 138 79 190; /* #8A4FBE */
+    --c-margen: 226 87 76; /* #E2574C */
+  }
+
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+    /* Slate azulado (elegido). Tono cómodo: oscuro pero luminoso, sin forzar
+       el brillo del monitor. */
+    --c-papel: 25 29 38; /* slate (#191D26) */
+    --c-tinta: 233 236 243; /* hueso frío luminoso (#E9ECF3) */
+    --c-superficie: 39 46 58; /* tarjeta, escalón claro (#272E3A) */
+    --c-pizarra: 60 208 167; /* esmeralda (#3CD0A7) */
+    --c-guaria: 187 146 240; /* morado (#BB92F0) */
+    --c-margen: 246 122 112; /* coral (#F67A70) */
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-papel text-tinta font-body antialiased;
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family:
+      'Bricolage Grotesque', system-ui, sans-serif;
+  }
+
+  /* Foco visible y accesible en toda la app */
+  :focus-visible {
+    outline: 2px solid rgb(var(--c-pizarra));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Rayado horizontal muy tenue, estilo hoja de cuaderno */
+  .hoja-rayada {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 31px,
+      rgb(var(--c-tinta) / 0.06) 31px,
+      rgb(var(--c-tinta) / 0.06) 32px
+    );
+  }
+
+  /* Tarjeta firma: margen rojo vertical a la izquierda */
+  .tarjeta-cuaderno {
+    @apply relative rounded-cuaderno border border-tinta/10 bg-superficie shadow-sm;
+  }
+  /* Línea de margen roja: solo en tarjetas marcadas con .con-margen (antes salía
+     en TODAS las .tarjeta-cuaderno y quedaba de más). */
+  .con-margen::before {
+    content: '';
+    @apply absolute inset-y-3 left-3 w-px bg-margen/60;
+  }
+
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-cuaderno
+      px-4 py-2.5 font-medium transition-all duration-150 active:scale-[0.98]
+      disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-primario {
+    @apply btn bg-pizarra text-papel shadow-sm hover:bg-pizarra/90 hover:shadow
+      focus-visible:ring-2 focus-visible:ring-pizarra/40 focus-visible:ring-offset-1
+      focus-visible:ring-offset-papel;
+  }
+  .btn-secundario {
+    @apply btn border border-tinta/20 bg-superficie text-tinta shadow-sm
+      hover:border-tinta/40 hover:bg-tinta/5;
+  }
+
+  .campo {
+    @apply w-full rounded-cuaderno border border-tinta/20 bg-superficie px-3.5 py-2.5
+      text-tinta placeholder:text-tinta/55 focus:border-pizarra focus:outline-none
+      focus:ring-2 focus:ring-pizarra/30;
+  }
+
+  .etiqueta {
+    @apply mb-1 block text-sm font-medium text-tinta/80;
+  }
+
+  /* Botón de acción compacto pero con buen objetivo táctil (≥40px alto) */
+  .btn-accion {
+    @apply inline-flex select-none items-center justify-center gap-1 rounded-cuaderno
+      px-3 py-2 text-sm font-medium transition-all duration-150 active:scale-[0.98]
+      disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  /* Fila de pestañas deslizable en móvil, sin barra de scroll visible */
+  .scroll-tabs {
+    @apply flex gap-1 overflow-x-auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scroll-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Placeholder de carga */
+  .skeleton {
+    @apply animate-pulse rounded-cuaderno bg-tinta/10;
+  }
+}

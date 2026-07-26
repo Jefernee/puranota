@@ -1,0 +1,34 @@
+# ---- Secretos: NUNCA versionar ----
+.env
+.env.*
+!.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# ---- Dependencias y compilados ----
+node_modules/
+dist/
+build/
+.vite/
+
+# ---- Supabase CLI ----
+supabase/.temp/
+supabase/.branches/
+
+# ---- Respaldos (los sube el GitHub Action ya cifrados) ----
+backups/*
+!backups/.gitkeep
+*.sql.gpg.tmp
+
+# ---- Registros locales ----
+scripts/keep-alive.log
+*.log
+
+# ---- Sistema operativo / editores ----
+Thumbs.db
+desktop.ini
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es-CR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Tema: se aplica antes de pintar para evitar parpadeo. Claro por
+         defecto; solo queda oscuro si el usuario lo eligió con el botón. -->
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem('pn-tema') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark')
+          }
+        } catch (e) {}
+      })()
+    </script>
+    <meta name="theme-color" content="#176B4D" />
+    <meta
+      name="description"
+      content="PuraNota — la plataforma de aula para docentes y estudiantes del MEP."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap"
+      rel="stylesheet"
+    />
+    <title>PuraNota✓</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
