@@ -140,6 +140,35 @@ jobs:
             order by g.nombre, p.nombre, s.fecha
           " > "salida/asistencia-$FECHA.csv"
 
+          # Inventario de archivos. Los archivos en sí viven en Cloudflare R2 y
+          # NO se copian acá; esto deja constancia de cuáles existían, de quién
+          # eran y a qué pertenecían. Si algún día se pierde el bucket, con esto
+          # se sabe exactamente qué se perdió y a quién reclamárselo.
+          psql "$DB_URL" -v ON_ERROR_STOP=1 --csv -c "
+            select * from (
+              select 'entrega' as origen, g.nombre as grupo, a.titulo as actividad,
+                     p.nombre as estudiante, ea.nombre as archivo, ea.tipo,
+                     ea.creado_en, ea.url
+                from entrega_archivos ea
+                join entregas e     on e.id = ea.entrega_id
+                join asignaciones a on a.id = e.asignacion_id
+                join grupos g       on g.id = a.grupo_id
+                join perfiles p     on p.id = e.estudiante_id
+              union all
+              select 'clase', g.nombre, c.titulo, null,
+                     ca.nombre, ca.tipo, ca.creado_en, ca.url
+                from clase_archivos ca
+                join clases c on c.id = ca.clase_id
+                join grupos g on g.id = c.grupo_id
+              union all
+              select 'material', g.nombre, a.titulo, null,
+                     x->>'nombre', x->>'tipo', a.creado_en, x->>'url'
+                from asignaciones a
+                join grupos g on g.id = a.grupo_id,
+                     jsonb_array_elements(a.archivos) x
+            ) t order by grupo, origen, creado_en
+          " > "salida/archivos-$FECHA.csv"
+
           wc -l salida/*.csv
 
       - name: Cifrar
