@@ -28,6 +28,10 @@ concurrency:
   group: respaldo
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  issues: write # para poder avisar abriendo un issue si el respaldo falla
+
 jobs:
   respaldar:
     runs-on: ubuntu-latest
@@ -170,3 +174,69 @@ jobs:
       - name: Borrar la llave
         if: always()
         run: rm -f ~/.ssh/id_ed25519
+
+  # Si el respaldo falla, no basta con que quede en rojo en una pantalla que
+  # nadie mira: se abre un issue en el repositorio. Eso manda correo, aparece
+  # en la app de GitHub y deja constancia hasta que alguien lo cierre.
+  avisar-si-fallo:
+    needs: respaldar
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Abrir un aviso
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fecha = new Date().toISOString().slice(0, 10)
+            const titulo = `Falló el respaldo semanal (${fecha})`
+            const cuerpo = [
+              '**El respaldo automático de PuraNota no se completó.**',
+              '',
+              `Corrida: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '',
+              '### Qué revisar, en orden',
+              '',
+              '1. **¿Está pausado el proyecto de Supabase?** Entrá al panel y fijate.',
+              '   Si lo está, dale *Resume project* y volvé a correr el respaldo a mano.',
+              '2. **¿Cambió la contraseña de la base?** Si la resetearon, hay que',
+              '   actualizar el secreto `SUPABASE_DB_URL`.',
+              '3. **¿Siguen los tres secretos?** `SUPABASE_DB_URL`,',
+              '   `BACKUP_PASSPHRASE` y `RESPALDOS_SSH_KEY`.',
+              '4. **¿La llave de despliegue sigue activa** en el repositorio privado',
+              '   `puranota-respaldos`?',
+              '',
+              '### Mientras tanto',
+              '',
+              'El último respaldo bueno sigue guardado en `puranota-respaldos`.',
+              'No se perdió nada: lo que falta es el de esta semana.',
+              '',
+              'Para reintentar: pestaña **Actions** → *Respaldo semanal* → **Run workflow**.',
+              '',
+              '_Este aviso lo abrió el propio respaldo. Cerralo cuando esté resuelto._',
+            ].join('\n')
+
+            // Si ya hay un aviso abierto por lo mismo, se comenta en vez de
+            // abrir uno nuevo cada domingo.
+            const abiertos = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'respaldo',
+            })
+
+            if (abiertos.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: abiertos.data[0].number,
+                body: `Volvió a fallar el ${fecha}. Corrida: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              })
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: titulo,
+                body: cuerpo,
+                labels: ['respaldo'],
+              })
+            }
