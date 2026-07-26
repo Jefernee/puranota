@@ -4,8 +4,10 @@ El plan gratuito de Supabase **pausa el proyecto cuando ve poca actividad en la
 base durante 7 días**. Ya pasó dos veces. Este documento explica **por qué falló
 lo que teníamos** y qué hay que montar para que no vuelva a pasar.
 
-Datos del proyecto:
-- URL: `https://trbbbxuygsbnolttrgoj.supabase.co`
+Datos del proyecto (este repositorio es **público**, así que acá van marcadores;
+los valores reales están en tu `frontend/.env`, que no se versiona):
+- URL: `https://<TU-PROJECT-REF>.supabase.co` — el ref real también sale de
+  `supabase projects list` o de `supabase/.temp/project-ref` (local).
 - La **anon key** está en `frontend/.env` → `VITE_SUPABASE_ANON_KEY`.
   Es **pública** (ya viaja en el frontend), no es la `service_role`.
 
@@ -36,7 +38,7 @@ sitio se cae.
 2. **Add New Monitor** → tipo **HTTP(s)** → intervalo **5 minutos** → URL:
 
 ```
-https://trbbbxuygsbnolttrgoj.supabase.co/rest/v1/grupos?select=id&limit=1&apikey=TU_ANON_KEY
+https://<TU-PROJECT-REF>.supabase.co/rest/v1/grupos?select=id&limit=1&apikey=TU_ANON_KEY
 ```
 
 3. **Probá primero la URL en el navegador**: tiene que devolver `200` y un JSON

@@ -89,7 +89,7 @@ gratuito de Supabase.
 ### Variables de entorno (`frontend/.env`)
 
 ```
-VITE_SUPABASE_URL=https://trbbbxuygsbnolttrgoj.supabase.co
+VITE_SUPABASE_URL=https://<TU-PROJECT-REF>.supabase.co
 VITE_SUPABASE_ANON_KEY=<anon key — es pública, viaja en el frontend>
 ```
 
@@ -245,7 +245,7 @@ Paleta en variables CSS (`index.css`), en canales RGB para usarse con
 
 ## 6. Base de datos (Supabase / Postgres)
 
-Proyecto: **`trbbbxuygsbnolttrgoj`** · región `us-east-1` · Postgres 17 · plan **free**.
+Proyecto: **`<TU-PROJECT-REF>`** · región `us-east-1` · Postgres 17 · plan **free**.
 
 **Volumen real hoy (2026-07-25):** 3 perfiles, 1 grupo, 2 asignaciones, 2 entregas.
 O sea, **son datos de prueba, no producción con estudiantes reales todavía**. Eso
@@ -838,7 +838,7 @@ funcionando:
 - ✅ **Recomendado — monitor externo cada 5 minutos.** Crear en
   [UptimeRobot](https://uptimerobot.com) (gratis) un monitor HTTP(s) a:
   ```
-  https://trbbbxuygsbnolttrgoj.supabase.co/rest/v1/grupos?select=id&limit=1&apikey=<ANON_KEY>
+  https://<TU-PROJECT-REF>.supabase.co/rest/v1/grupos?select=id&limit=1&apikey=<ANON_KEY>
   ```
   Intervalo 5 min. Eso son ~288 consultas reales a Postgres por día: la
   inactividad deja de ser discutible, y además avisa por correo si el proyecto se

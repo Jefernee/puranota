@@ -16,10 +16,15 @@ build/
 supabase/.temp/
 supabase/.branches/
 
-# ---- Respaldos (los sube el GitHub Action ya cifrados) ----
-backups/*
-!backups/.gitkeep
-*.sql.gpg.tmp
+# ---- Respaldos ----
+# NUNCA en este repositorio: es público y los respaldos llevan datos de menores.
+# Van a un repositorio privado aparte (ver docs/PLAN.md §5).
+backups/
+
+# ---- Referencia visual de diseño ----
+# Capturas del Aula Virtual de la UISIL. Se quedan en tu disco y NO se versionan:
+# llevan número de cédula, nombres y aportes de terceros. Se citan en docs/PLAN.md.
+imagenes/
 
 # ---- Registros locales ----
 scripts/keep-alive.log

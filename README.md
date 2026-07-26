@@ -135,13 +135,21 @@ Dos decimales en las notas de periodo, redondeo solo en el promedio anual
 ## Privacidad
 
 El sistema maneja **datos personales de menores de edad**: nombres, correos,
-teléfonos, notas y asistencia.
+teléfonos, notas y asistencia. Este repositorio es **público**, así que la regla
+es simple y no se rompe:
 
-- Este repositorio es **privado** y debe seguir siéndolo.
+> **Acá vive el código. Ningún dato de estudiante entra a este repositorio, ni
+> siquiera cifrado.**
+
+- Los **respaldos** (volcados de la base y planillas de notas) se guardan
+  cifrados en un repositorio **privado aparte**. Ver [`docs/PLAN.md`](docs/PLAN.md) §5.
 - La `service_role` key de Supabase **nunca** va en el frontend: todo lo que la
-  necesita vive en una Edge Function.
-- Los respaldos automáticos se guardan **cifrados**.
-- Los archivos `.env` no se versionan.
+  necesita vive en una Edge Function, con los secretos del lado del servidor.
+- Los archivos `.env` no se versionan; en la documentación van marcadores en
+  lugar de identificadores reales del proyecto.
+- Las credenciales de Cloudflare R2 viven solo como secretos de Edge Function.
+- La `anon key` de Supabase sí es pública por diseño: la protección real son las
+  políticas RLS de la base, no esconder la llave.
 
 ---
 

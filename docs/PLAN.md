@@ -50,7 +50,8 @@ firme**. Sin eso, todo lo demás se sigue atrasando.
 | **D11** ✅ | **Indexación: landing pública estática + app con `noindex`.** | Google no puede indexar lo que está detrás de un login. |
 | **D12** ✅ | **Móvil primero, literal:** ninguna vista se termina hasta verse bien en **390 px**. | Los estudiantes usan celular. Hoy se diseña grande y se parcha. |
 | **D13** ✅ | **`asignaciones.tipo`** (`entrega · prueba · proyecto · foro`) se agrega **hoy**, aunque los foros se construyan en el bloque 2. | La tabla de Evaluación ya necesita la columna Tipo. Agregarla ahora cuesta 5 minutos; derivarla a mano y rehacerla después cuesta un día. Es el enchufe donde se conecta el foro (§8.1). |
-| **D14** ✅ | **Los respaldos corren en la nube, no en tu PC**: un GitHub Action semanal genera el volcado de la base y los CSV de notas, los **cifra** y los guarda en el repositorio privado. Se borran solos a los 6 meses. | Pediste no depender de acordarte. Una tarea en tu computadora depende de que esté encendida; esta no depende de nada tuyo. |
+| **D14** ✅ | **Los respaldos corren en la nube, no en tu PC**: un GitHub Action semanal genera el volcado de la base y los CSV de notas, los **cifra** y los guarda en un **repositorio privado aparte** (`puranota-respaldos`). Se borran solos a los 6 meses. | Pediste no depender de acordarte. Una tarea en tu computadora depende de que esté encendida; esta no depende de nada tuyo. |
+| **D16** ✅ | **Dos repositorios: `puranota` público (código, portafolio) y `puranota-respaldos` privado (datos).** El código nunca guarda datos. | *(2026-07-25.)* Querés mostrarlo a empleadores, y eso es bueno. Pero un repositorio público con datos de menores no es una opción, ni cifrados. Separarlos además es mejor arquitectura: los respaldos nunca pertenecen al repositorio de código. |
 | **D15** ✅ | **Desplegar temprano (bloque 1) con `noindex`; indexar al final (bloque 2).** | Publicar temprano te da una dirección real para probar en el celular y el flujo "subo un cambio y se publica solo". Indexar temprano solo lograría que Google vea un producto a medias. |
 
 ---
@@ -289,17 +290,24 @@ respaldos. Todo corre **en la nube**, no en tu computadora.
 
 ### Cómo funciona
 
-Un **GitHub Action programado** que corre solo todos los domingos:
+Un **GitHub Action programado** que corre solo todos los domingos, desde el
+repositorio **público** de código, pero que **escribe en un repositorio privado
+aparte** (D16):
 
 ```
-Domingo 06:00
+Domingo 06:00   (Action en  puranota  → escribe en  puranota-respaldos, privado)
   1. supabase db dump            → puranota-AAAA-MM-DD.sql   (todo: estructura + datos)
   2. genera CSV de notas          → notas-<grupo>-<periodo>.csv  (uno por grupo/periodo)
   3. cifra ambos con la clave del secret
-  4. commit + push a  backups/    en el repositorio privado
+  4. commit + push al repositorio PRIVADO de respaldos
   5. borra los respaldos de más de 6 meses
   6. si algo falla → te llega correo de GitHub
 ```
+
+> **Regla que no se rompe:** en `puranota` (público) **no entra ni un dato de
+> estudiante**, ni siquiera cifrado. Los secretos del Action (contraseña de
+> cifrado, token de acceso al repositorio privado, credenciales de la base) viven
+> en *GitHub Secrets*, que no son visibles aunque el repositorio sea público.
 
 Ventajas sobre lo que teníamos pensado: **no depende de que la PC esté
 encendida**, no depende de que te acordés, queda con fecha e historial, y el
@@ -322,7 +330,8 @@ librerías y Excel lo abre igual — menos piezas que se puedan romper).
 El respaldo contiene **nombres, correos, teléfonos y notas de menores de edad**.
 Por eso:
 
-- El repositorio va **privado**, nunca público. Con verificación en dos pasos.
+- El repositorio de **respaldos** va **privado**, nunca público, con verificación
+  en dos pasos. El de **código** es público y no lleva ni un dato (D16).
 - Los archivos de respaldo van **cifrados** con una contraseña guardada como
   *secret* de GitHub. Sin esa contraseña no se abren, ni siquiera con acceso al
   repositorio.
