@@ -123,10 +123,24 @@ export default function NotasPanel({ grupo }) {
     <div className="space-y-4">
       {/* Encabezado + selector de periodo */}
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-tinta/10 pb-3">
-        <div>
-          <h2 className="text-lg font-bold text-tinta sm:text-xl">Registro de calificaciones</h2>
-          <p className="text-[15px] text-tinta/70">
-            Evaluado: <b className="text-tinta/80">{pct(evaluado, 0)}</b> de 100%
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold text-tinta sm:text-xl">
+            Registro de calificaciones
+          </h2>
+          {/* Encabezado de documento: los datos del registro en una línea, en vez
+              de una explicación al pie de la tabla. */}
+          <p className="mt-0.5 text-sm text-tinta/65">
+            {estudiantes.length}{' '}
+            {estudiantes.length === 1 ? 'estudiante' : 'estudiantes'} ·{' '}
+            {columnas.length}{' '}
+            {columnas.length === 1 ? 'actividad' : 'actividades'} · Evaluado{' '}
+            <b className="text-tinta/80">{pct(evaluado, 0)}</b> de 100%
+            {umbral != null && (
+              <>
+                {' '}
+                · Mínimo para aprobar <b className="text-tinta/80">{umbral}</b>
+              </>
+            )}
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -341,19 +355,6 @@ export default function NotasPanel({ grupo }) {
             ))}
           </ul>
 
-          <p className="text-[15px] text-tinta/70">
-            Cada celda es la <b>calificación</b> de esa actividad en porcentaje del
-            periodo (si vale 15% y sacó el 80%, la celda dice 12,00%). La columna{' '}
-            <b>Nota</b> es la <b>suma</b> de la fila.
-            {umbral != null && (
-              <>
-                {' '}
-                Mínimo de aprobación: {umbral} —{' '}
-                <span className="text-pizarra">verde</span> aprueba,{' '}
-                <span className="text-margen">rojo</span> va por debajo.
-              </>
-            )}
-          </p>
         </>
       )}
     </div>
