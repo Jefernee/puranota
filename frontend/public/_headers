@@ -1,0 +1,19 @@
+# Cabeceras que aplica Cloudflare Pages.
+
+/*
+  # Fuera de los buscadores mientras no exista la página pública (decisión D15
+  # en docs/PLAN.md). Cuando se construya la landing en el bloque 2, esta línea
+  # se quita de "/" y se deja solo en las rutas de la app.
+  X-Robots-Tag: noindex, nofollow
+  # No adivinar el tipo de archivo: evita que un archivo subido por un
+  # estudiante se interprete como algo ejecutable.
+  X-Content-Type-Options: nosniff
+  # Que nadie meta PuraNota dentro de un iframe ajeno (clickjacking).
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+# Vite le pone un hash al nombre de cada archivo compilado, así que un archivo
+# nunca cambia de contenido: se puede cachear para siempre sin miedo.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

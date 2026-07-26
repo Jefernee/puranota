@@ -1,0 +1,16 @@
+# Mientras no exista la página pública, PuraNota queda fuera de los buscadores
+# (decisión D15 en docs/PLAN.md). No tiene sentido que Google indexe una
+# pantalla de ingreso ni un producto a medio hacer.
+#
+# En el bloque 2, cuando esté la landing, esto pasa a:
+#
+#   User-agent: *
+#   Disallow: /docente
+#   Disallow: /estudiante
+#   Disallow: /admin
+#   Disallow: /cuenta
+#   Allow: /
+#   Sitemap: https://<dominio>/sitemap.xml
+
+User-agent: *
+Disallow: /

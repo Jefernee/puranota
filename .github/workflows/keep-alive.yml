@@ -7,7 +7,10 @@ name: Keep Supabase alive
 
 on:
   schedule:
-    - cron: '0 12 */2 * *' # cada 2 días, 12:00 UTC
+    # Dos veces al día. Un solo ping diario no alcanzó (ver docs/keep-alive.md):
+    # el proyecto se pausó igual el 2026-07-22 con pings diarios en verde.
+    - cron: '0 13 * * *' # 07:00 en Costa Rica
+    - cron: '0 1 * * *' # 19:00 en Costa Rica
   workflow_dispatch: {} # permite dispararlo a mano
 
 jobs:

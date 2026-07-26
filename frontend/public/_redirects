@@ -1,0 +1,10 @@
+# PuraNota es una aplicación de una sola página: el enrutado lo hace React en el
+# navegador, no el servidor. Sin esta regla, entrar directo a una dirección como
+# /estudiante/grupos/abc —o simplemente recargar la página— devuelve 404, porque
+# en el servidor ese archivo no existe.
+#
+# Con esto, cualquier ruta sirve index.html con código 200 y React decide qué
+# mostrar. Los archivos que sí existen (/assets/…, /favicon.svg) se sirven antes
+# que esta regla, así que no se ven afectados.
+
+/*    /index.html   200
