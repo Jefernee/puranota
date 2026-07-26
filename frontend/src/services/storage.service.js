@@ -89,7 +89,13 @@ export async function subirArchivo(
   return { url: data.publicUrl, nombre: file.name, tipo }
 }
 
-/** PUT a R2 con XMLHttpRequest para emitir progreso de subida (0-100). */
+/**
+ * PUT a R2 con XMLHttpRequest para emitir progreso de subida (0-100).
+ *
+ * El error dice QUÉ pasó, no solo que pasó algo. Antes cualquier fallo devolvía
+ * "revisá tu conexión", que es inútil: un 403 por credencial vencida y un corte
+ * de wifi se veían igual, y no había forma de diagnosticarlo sin adivinar.
+ */
 function subirPut(url, archivo, tipo, onProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
@@ -101,14 +107,46 @@ function subirPut(url, archivo, tipo, onProgress) {
         if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100))
       }
     }
-    const fallar = () =>
-      reject(new Error('No se pudo subir el archivo. Revisá tu conexión.'))
+
     xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) resolve()
-      else fallar()
+      if (xhr.status >= 200 && xhr.status < 300) return resolve()
+
+      // R2 contesta con un XML que trae el motivo exacto (por ejemplo
+      // InvalidAccessKeyId o SignatureDoesNotMatch). Se rescata si viene.
+      let detalle = ''
+      const m = /<Code>([^<]+)<\/Code>/.exec(xhr.responseText || '')
+      if (m) detalle = ` — ${m[1]}`
+
+      const porStatus = {
+        400: 'la firma de la subida no es válida',
+        401: 'el almacenamiento rechazó las credenciales',
+        403: 'el almacenamiento rechazó las credenciales o la firma venció',
+        404: 'no se encontró el destino de la subida',
+        413: 'el archivo es demasiado grande para el almacenamiento',
+      }
+      const causa = porStatus[xhr.status] || 'el almacenamiento devolvió un error'
+
+      reject(
+        new Error(
+          `No se pudo subir "${archivo.name || 'el archivo'}": ${causa} ` +
+            `(HTTP ${xhr.status}${detalle}). Mostrale este mensaje a quien administra el sistema.`,
+        ),
+      )
     }
-    xhr.onerror = fallar
-    xhr.onabort = fallar
+
+    // Sin respuesta: o no hay red, o el navegador bloqueó la respuesta por CORS.
+    xhr.onerror = () =>
+      reject(
+        new Error(
+          'No se pudo subir el archivo: no hubo respuesta del almacenamiento. ' +
+            'Puede ser tu conexión, o que el servidor no esté aceptando subidas ' +
+            'desde este sitio (CORS).',
+        ),
+      )
+    xhr.ontimeout = () =>
+      reject(new Error('No se pudo subir el archivo: la subida tardó demasiado.'))
+    xhr.onabort = () => reject(new Error('Subida cancelada.'))
+
     xhr.send(archivo)
   })
 }
