@@ -10,7 +10,7 @@ import { etiquetaPeriodo } from '../../lib/periodos'
 import { formatearFecha } from '../../lib/formato'
 import { calcularEstado, TONO_BADGE } from '../../lib/entregas'
 import ClaseContenido from '../../components/ClaseContenido'
-import NotasEstudiante from '../../components/estudiante/NotasEstudiante'
+import EvaluacionEstudiante from '../../components/estudiante/EvaluacionEstudiante'
 import { obtenerGrupo } from '../../services/grupos.service'
 import { listarAsignaciones } from '../../services/asignaciones.service'
 import { listarMisEntregas } from '../../services/entregas.service'
@@ -36,9 +36,14 @@ export default function GrupoEstudiante() {
   // Deep-link opcional desde el inicio: /grupos/:id?clase=<id> abre esa clase.
   const [searchParams] = useSearchParams()
   const claseParam = searchParams.get('clase')
-  const [vista, setVista] = useState(() =>
-    claseParam ? 'clases' : leer(claveSec) || 'asignaciones',
-  )
+  // "Asignaciones" y "Notas" se fusionaron en "Evaluación" (ver docs/PLAN.md §8):
+  // si quedó guardada una de las viejas, se traduce a la nueva.
+  const VIEJAS = { asignaciones: 'evaluacion', notas: 'evaluacion' }
+  const [vista, setVista] = useState(() => {
+    if (claseParam) return 'clases'
+    const guardada = leer(claveSec)
+    return VIEJAS[guardada] || guardada || 'evaluacion'
+  })
   const [claseSelId, setClaseSelId] = useState(() => claseParam || leer(claveClase))
   const cambiarVista = (v) => {
     setVista(v)
@@ -135,56 +140,9 @@ export default function GrupoEstudiante() {
 
   const panel = (
     <>
-      {vista === 'asignaciones' &&
-        (items.length === 0 ? (
-          <p className="text-sm text-tinta/60">
-            Tu profe todavía no publicó asignaciones.
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {items.map(({ asignacion: a, entrega }) => {
-              const est = calcularEstado(a, entrega)
-              return (
-                <li key={a.id}>
-                  <Link
-                    to={`/estudiante/asignaciones/${a.id}`}
-                    className="group flex items-center gap-4 rounded-cuaderno border border-tinta/10 bg-superficie px-4 py-3.5 pl-5 shadow-sm transition-colors hover:border-pizarra/40"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-tinta">{a.titulo}</p>
-                      <p className="mt-0.5 truncate text-sm text-tinta/65">
-                        {a.rubro}
-                        {a.porcentaje != null && ` · vale ${a.porcentaje}%`}
-                        {` · ${a.puntos} pts`}
-                        {a.fecha_limite &&
-                          ` · Entrega ${formatearFecha(a.fecha_limite, false)}`}
-                      </p>
-                    </div>
-
-                    {entrega?.estado === 'calificada' && entrega.nota != null && (
-                      <span className="shrink-0 text-sm font-bold text-guaria">
-                        {entrega.nota}/{a.puntos}
-                      </span>
-                    )}
-                    <span
-                      className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${TONO_BADGE[est.tono]}`}
-                    >
-                      {est.etiqueta}
-                    </span>
-                    <span
-                      className="shrink-0 text-lg text-tinta/30 transition-transform group-hover:translate-x-0.5 group-hover:text-pizarra"
-                      aria-hidden="true"
-                    >
-                      ›
-                    </span>
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        ))}
-
-      {vista === 'notas' && <NotasEstudiante grupo={grupo} items={items} />}
+      {vista === 'evaluacion' && (
+        <EvaluacionEstudiante grupo={grupo} items={items} clases={clases} />
+      )}
 
       {vista === 'clases' &&
         (clases.length === 0 ? (
@@ -359,7 +317,6 @@ export default function GrupoEstudiante() {
 // Columna de dato (etiqueta arriba, valor abajo) para las filas de asignación.
 // `destacado` resalta el valor (se usa para el % que vale la asignación).
 const TABS = [
-  { id: 'asignaciones', label: 'Asignaciones', icon: '📝' },
   { id: 'clases', label: 'Clases', icon: '🎬' },
-  { id: 'notas', label: 'Notas', icon: '📊' },
+  { id: 'evaluacion', label: 'Evaluación', icon: '📊' },
 ]

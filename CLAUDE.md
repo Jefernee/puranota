@@ -305,7 +305,8 @@ Al registrarse un correo pre-matriculado, un trigger lo mete al grupo solo.
 `rubrica` jsonb `[{criterio,puntos}]`, `visible`, `creado_en`,
 **(+)** `periodo` `'I'|'II'|'III'`, **(+)** `porcentaje` numeric,
 **(+)** `penalizacion_tardia` numeric, **(+)** `requiere_entrega` boolean,
-**(+)** `clase_id` uuid, **(+)** `archivos` jsonb `[{url,nombre,tipo}]`.
+**(+)** `clase_id` uuid, **(+)** `archivos` jsonb `[{url,nombre,tipo}]`,
+**(+)** `tipo` `'entrega'|'prueba'|'proyecto'|'foro'` (default `'entrega'`).
 
 - `puntos` = escala con la que se califica (ej. sobre 10, sobre 40).
 - **`porcentaje`** = cuánto vale esta asignación **del 100 del periodo**, dentro
@@ -408,6 +409,16 @@ alter table public.grupos
   add column especialidad text,
   add column mep_modalidad text;
 -- tabla anuncios + su RLS
+
+-- 2026-07-25 — Tipo de actividad (PLAN.md D13). Enchufe de la columna "Tipo"
+-- del registro y de los foros del bloque 2.
+alter table public.asignaciones
+  add column if not exists tipo text not null default 'entrega';
+alter table public.asignaciones
+  add constraint asignaciones_tipo_check
+  check (tipo in ('entrega','prueba','proyecto','foro'));
+update public.asignaciones set tipo = 'prueba'
+ where requiere_entrega = false and tipo = 'entrega';
 ```
 
 > **Tarea abierta:** regenerar `backend/aula_cr_fase1_schema.sql` desde la base
@@ -417,11 +428,37 @@ alter table public.grupos
 
 ## 7. ★ NOTAS Y CALIFICACIONES (la parte crítica)
 
+> ## ⚠️ REESCRITO EL 2026-07-25 — leer `docs/PLAN.md` §3
+>
+> El modelo cambió al de un **registro académico formal** (referencia: Aula
+> Virtual de la UISIL, capturas en `imagenes/`). Lo que sigue en §7.1–§7.5
+> describe el modelo **viejo** y se conserva solo como historia. **Lo vigente:**
+>
+> **Vocabulario (3 palabras, iguales en código y en las dos pantallas):**
+> - **Valor %** = `asignaciones.porcentaje` — cuánto vale la actividad del periodo.
+> - **Calificación** = `(nota / puntos) × Valor %` — cuánto de ese valor obtuvo,
+>   **expresado en porcentaje**, nunca en puntos crudos.
+> - **NOTA FINAL** = **suma** de la columna Calificación. Un solo número.
+>
+> **Regla de oro:** la NOTA FINAL es la suma de lo que se ve en pantalla. Una
+> fila que no cuenta (rubro inexistente o sin Valor %) muestra la pastilla
+> «No cuenta», **no un número** — así la suma siempre cuadra.
+>
+> **Decimales:** REAC Art. 26 → 2 decimales en el periodo (`pct()` formatea
+> `31,50%` en es-CR); solo el promedio anual se redondea (`redondearAnual`).
+>
+> **Dónde vive:** `lib/notas.js` → `calcularRegistro()` y `calificacionDe()`.
+> **Quién lo muestra:** `components/estudiante/EvaluacionEstudiante.jsx` (registro
+> del estudiante, reemplazó a `NotasEstudiante.jsx`) y
+> `components/docente/NotasPanel.jsx` (registro del grupo).
+>
+> **Los bugs A, B y C de §7.6 ya están corregidos.**
+
 Esta es la sección más importante del documento. Acá fue donde más se dio vueltas
 y donde más fácil se rompe algo. **Todo el cálculo vive en un solo archivo:
 `frontend/src/lib/notas.js`.** No lo dupliques en componentes.
 
-### 7.1 El modelo mental, en una frase
+### 7.1 El modelo mental, en una frase *(histórico — ver el recuadro de arriba)*
 
 > El periodo vale **100 puntos**. Los **rubros** reparten esos 100 entre sí. Cada
 > **asignación** se lleva un pedacito del porcentaje de su rubro. La nota de la
@@ -571,9 +608,18 @@ Validaciones del `RubrosEditor` que **no** hay que aflojar:
 Además, la configuración de asistencia es **global al grupo** (igual en todos los
 periodos), aunque el editor la muestre dentro de cada periodo.
 
-### 7.6 ⚠️ Bugs conocidos y trampas del módulo de notas
+### 7.6 Bugs del módulo de notas — ✅ A, B y C CORREGIDOS el 2026-07-25
 
-Documentados, **no arreglados**. Si vas a tocar notas, empezá por acá.
+Se dejan escritos porque explican **por qué** el código es como es hoy; si alguien
+"simplifica" estas guardas, los bugs vuelven.
+
+- **(A) corregido** en `calificacionDe()`: la penalización por tardía solo se
+  aplica si `requiere_entrega !== false`.
+- **(B) corregido** en `motivoNoCuenta()`: una actividad sin `porcentaje` se marca
+  `sin_valor`, se avisa en pantalla y no se le muestra número.
+- **(C) corregido**: la leyenda del registro del docente ahora describe lo que
+  realmente muestra (celda = calificación en % del periodo; Nota = suma de la fila).
+- **(D), (E) y (F)** siguen vigentes tal como están descritos abajo.
 
 **(A) Penalización fantasma en notas directas.**
 `marcar_tardia()` es un trigger **BEFORE INSERT**. `calificarPorEstudiante()`

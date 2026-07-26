@@ -52,6 +52,68 @@ export function puedeEntregar(asignacion, entrega) {
   return asignacion.permite_tardias || limite == null || !vencido
 }
 
+// ─── Tipo de actividad (columna "Tipo" del registro) ─────────────────────────
+
+/**
+ * Tipos de actividad. El ícono es discreto a propósito: identifica de un vistazo
+ * sin competir con el texto (ver docs/PLAN.md §3.3).
+ */
+// `clase` va con las clases de Tailwind COMPLETAS: Tailwind no puede generar
+// nombres armados en tiempo de ejecución (`bg-${tono}` nunca existiría en el CSS).
+export const TIPOS = {
+  entrega: {
+    label: 'Entrega',
+    icono: '▣',
+    clase: 'bg-pizarra/12 text-pizarra',
+  },
+  prueba: {
+    label: 'Prueba',
+    icono: '◆',
+    clase: 'bg-guaria/12 text-guaria',
+  },
+  proyecto: {
+    label: 'Proyecto',
+    icono: '≡',
+    clase: 'bg-margen/12 text-margen',
+  },
+  foro: {
+    label: 'Foro',
+    icono: '❝',
+    clase: 'bg-tinta/10 text-tinta/70',
+  },
+}
+
+/**
+ * Tipo de una asignación. Las filas viejas (anteriores a la columna `tipo`) se
+ * deducen de `requiere_entrega`, así nada se ve roto mientras se migran.
+ */
+export function tipoDe(asignacion) {
+  const t = asignacion?.tipo
+  if (t && TIPOS[t]) return { clave: t, ...TIPOS[t] }
+  const clave = asignacion?.requiere_entrega === false ? 'prueba' : 'entrega'
+  return { clave, ...TIPOS[clave] }
+}
+
+/**
+ * Estado para la columna "Estado" del registro. A diferencia de `calcularEstado`,
+ * acá "calificada" NO es un estado: la calificación tiene su propia columna. Lo
+ * que importa es si entregó y si lo hizo a tiempo.
+ */
+export function estadoRegistro(asignacion, entrega) {
+  if (asignacion?.requiere_entrega === false) {
+    return { clave: 'sin_entrega', etiqueta: 'No requiere entrega', tono: 'tinta' }
+  }
+  if (entrega) {
+    return entrega.tardia
+      ? { clave: 'tardia', etiqueta: 'Entregada tarde', tono: 'margen' }
+      : { clave: 'entregada', etiqueta: 'Entregada', tono: 'pizarra' }
+  }
+  const { vencido } = vencimiento(asignacion)
+  if (vencido && !asignacion?.permite_tardias)
+    return { clave: 'cerrada', etiqueta: 'Cerrada', tono: 'tinta' }
+  return { clave: 'sin_entregar', etiqueta: 'Sin entregar', tono: 'tinta' }
+}
+
 // Clases de color para los badges de estado, por tono del tema. Con aro interno
 // para que se lean como pastillas definidas (y no "lavadas") en claro y oscuro.
 export const TONO_BADGE = {
