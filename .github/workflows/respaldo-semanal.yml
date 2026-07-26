@@ -1,0 +1,172 @@
+# Respaldo semanal de PuraNota (decisiones D14 y D16 en docs/PLAN.md).
+#
+# Corre solo todos los domingos y NO depende de que ninguna computadora esté
+# encendida. Genera el volcado completo de la base y planillas CSV legibles,
+# los CIFRA, y los empuja al repositorio PRIVADO `puranota-respaldos`.
+#
+# Este repositorio es público: acá no se guarda ni un dato de estudiante.
+#
+# Secretos necesarios (Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL     cadena de conexión de Postgres (Supabase → Project
+#                       Settings → Database → Connection string → URI)
+#   BACKUP_PASSPHRASE   contraseña de cifrado (guardala en tu gestor: sin ella
+#                       los respaldos no se pueden abrir)
+#   RESPALDOS_SSH_KEY   llave de despliegue con permiso de escritura sobre
+#                       Jefernee/puranota-respaldos
+#
+# Para restaurar:  gpg -d archivo.sql.gpg > archivo.sql  y correrlo en un
+# proyecto nuevo de Supabase.
+
+name: Respaldo semanal
+
+on:
+  schedule:
+    - cron: '0 12 * * 0' # domingos 06:00 en Costa Rica (UTC-6)
+  workflow_dispatch: {} # también se puede disparar a mano
+
+concurrency:
+  group: respaldo
+  cancel-in-progress: false
+
+jobs:
+  respaldar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comprobar que los secretos existen
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+          KEY: ${{ secrets.RESPALDOS_SSH_KEY }}
+        run: |
+          faltan=""
+          [ -z "$DB" ]   && faltan="$faltan SUPABASE_DB_URL"
+          [ -z "$PASS" ] && faltan="$faltan BACKUP_PASSPHRASE"
+          [ -z "$KEY" ]  && faltan="$faltan RESPALDOS_SSH_KEY"
+          if [ -n "$faltan" ]; then
+            echo "::error::Faltan secretos:$faltan"
+            exit 1
+          fi
+
+      - name: Preparar la llave de escritura al repositorio de respaldos
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.RESPALDOS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Clonar el repositorio privado de respaldos
+        run: |
+          git clone git@github.com:Jefernee/puranota-respaldos.git repo
+          cd repo
+          git config user.name  "Respaldo automatico"
+          git config user.email "actions@github.com"
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Instalar cliente de Postgres
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+      - name: Volcado completo de la base
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          FECHA=$(date -u +%Y-%m-%d)
+          echo "FECHA=$FECHA" >> "$GITHUB_ENV"
+          mkdir -p salida
+          # Estructura y datos en un solo archivo restaurable.
+          supabase db dump --db-url "$DB_URL" -f salida/estructura.sql
+          supabase db dump --db-url "$DB_URL" --data-only -f salida/datos.sql
+          cat salida/estructura.sql salida/datos.sql > "salida/puranota-$FECHA.sql"
+          rm salida/estructura.sql salida/datos.sql
+          ls -lh salida/
+
+      # Planillas legibles: el objetivo es poder abrir las notas SIN la app.
+      #
+      # OJO: la expresión de `calificacion_pct` es un ESPEJO de `calificacionDe()`
+      # en frontend/src/lib/notas.js. Si allá cambia la fórmula, hay que cambiarla
+      # acá. Se exportan además los datos crudos (nota, puntos, valor) para poder
+      # recalcular a mano si alguna vez divergen.
+      - name: Planillas CSV de notas y asistencia
+        env:
+          PGCLIENTENCODING: UTF8
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          psql "$DB_URL" -v ON_ERROR_STOP=1 --csv -c "
+            select
+              g.nombre        as grupo,
+              a.periodo,
+              a.rubro,
+              a.tipo,
+              a.titulo        as actividad,
+              a.porcentaje    as valor_pct,
+              a.puntos,
+              a.fecha_limite,
+              p.nombre        as estudiante,
+              p.correo,
+              e.estado,
+              e.nota,
+              e.tardia,
+              case
+                when e.estado = 'calificada' and e.nota is not null
+                     and a.puntos > 0 and coalesce(a.porcentaje,0) > 0
+                then round(
+                       (e.nota / a.puntos)
+                       * case when a.requiere_entrega and e.tardia
+                              then 1 - least(greatest(coalesce(a.penalizacion_tardia,0),0),100)/100.0
+                              else 1 end
+                       * a.porcentaje, 2)
+              end             as calificacion_pct
+            from asignaciones a
+            join grupos g              on g.id = a.grupo_id
+            join grupo_estudiantes ge  on ge.grupo_id = a.grupo_id and ge.estado = 'activo'
+            join perfiles p            on p.id = ge.estudiante_id
+            left join entregas e       on e.asignacion_id = a.id and e.estudiante_id = p.id
+            order by g.nombre, a.periodo, p.nombre, a.fecha_limite nulls last
+          " > "salida/notas-$FECHA.csv"
+
+          psql "$DB_URL" -v ON_ERROR_STOP=1 --csv -c "
+            select g.nombre as grupo, p.nombre as estudiante, p.correo, s.fecha, s.estado
+            from asistencia s
+            join grupos g   on g.id = s.grupo_id
+            join perfiles p on p.id = s.estudiante_id
+            order by g.nombre, p.nombre, s.fecha
+          " > "salida/asistencia-$FECHA.csv"
+
+          wc -l salida/*.csv
+
+      - name: Cifrar
+        env:
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          for f in salida/*; do
+            gpg --batch --yes --symmetric --cipher-algo AES256 \
+                --passphrase "$PASS" -o "$f.gpg" "$f"
+            rm "$f"
+          done
+          ls -lh salida/
+
+      - name: Guardar en el repositorio privado y limpiar lo viejo
+        run: |
+          set -euo pipefail
+          cd repo
+          mkdir -p respaldos
+          mv ../salida/*.gpg respaldos/
+          # Retención: se conservan 6 meses (aprox. 185 días).
+          find respaldos -name '*.gpg' -type f -mtime +185 -print -delete || true
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Sin cambios que guardar."
+          else
+            git commit -m "Respaldo $FECHA"
+            git push origin HEAD
+            echo "Respaldo $FECHA guardado."
+          fi
+
+      - name: Borrar la llave
+        if: always()
+        run: rm -f ~/.ssh/id_ed25519
