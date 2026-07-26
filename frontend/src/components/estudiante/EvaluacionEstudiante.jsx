@@ -102,7 +102,7 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
       {/* Encabezado + selector de periodo */}
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-tinta/10 pb-3">
         <div>
-          <h2 className="text-xl font-bold text-tinta">Evaluación</h2>
+          <h2 className="text-lg font-bold text-tinta sm:text-xl">Evaluación</h2>
           <p className="text-[15px] text-tinta/70">
             Entregas, pruebas y proyectos del {etiquetaPeriodo(periodo)}.
           </p>
@@ -319,7 +319,7 @@ function CeldaCalificacion({ fila, grande = false }) {
   if (fila.noCuenta) {
     return (
       <span
-        className="whitespace-nowrap rounded-full bg-tinta/10 px-2 py-1 text-[12px] font-medium text-tinta/65 ring-1 ring-inset ring-tinta/20"
+        className="whitespace-nowrap rounded-full bg-tinta/10 px-2 py-1 text-[13px] font-medium text-tinta/65 ring-1 ring-inset ring-tinta/20"
         title={
           fila.noCuenta === 'rubro'
             ? 'Su rubro ya no existe: no cuenta para la nota'
@@ -339,7 +339,7 @@ function CeldaCalificacion({ fila, grande = false }) {
   }
   if (fila.entrega) {
     return (
-      <span className="whitespace-nowrap rounded-full bg-tinta/10 px-2 py-1 text-[12px] font-medium text-tinta/65 ring-1 ring-inset ring-tinta/20">
+      <span className="whitespace-nowrap rounded-full bg-tinta/10 px-2 py-1 text-[13px] font-medium text-tinta/65 ring-1 ring-inset ring-tinta/20">
         No revisado
       </span>
     )
@@ -487,7 +487,7 @@ function FilaMovil({ fila, claseTitulo }) {
           </span>
         </span>
 
-        <span className="flex w-[94px] shrink-0 flex-col items-end gap-1.5 text-right">
+        <span className="flex w-[104px] shrink-0 flex-col items-end gap-1.5 text-right">
           <span className="text-sm tabular-nums text-tinta/60">
             Vale {fila.valor == null ? '—' : `${fila.valor}%`}
           </span>
@@ -521,7 +521,7 @@ function FilaMovilAsistencia({ asistencia, conteos }) {
         </span>
       </span>
 
-      <span className="flex w-[94px] shrink-0 flex-col items-end gap-1.5 text-right">
+      <span className="flex w-[104px] shrink-0 flex-col items-end gap-1.5 text-right">
         <span className="text-sm tabular-nums text-tinta/60">
           Vale {asistencia.valor == null ? '—' : `${asistencia.valor}%`}
         </span>

@@ -155,7 +155,7 @@ export default function AsignacionEstudiante() {
           Volver al grupo
         </Volver>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-          <h1 className="min-w-0 break-words text-xl font-bold leading-tight text-tinta sm:text-2xl">
+          <h1 className="min-w-0 break-words text-lg font-bold leading-snug text-tinta sm:text-2xl">
             {asignacion.titulo}
           </h1>
           <span
@@ -430,7 +430,7 @@ function Revision({ asignacion, entrega }) {
 
       <div className="bg-superficie px-5 py-4">
         <p className="text-sm text-tinta/65">Obtuviste</p>
-        <p className="mt-0.5 text-3xl font-bold leading-none tabular-nums text-tinta">
+        <p className="mt-0.5 text-2xl font-bold leading-none tabular-nums text-tinta sm:text-3xl">
           {obtenido == null ? '—' : pct(obtenido)}
           {vale != null && (
             <span className="text-xl font-semibold text-tinta/55"> / {vale}%</span>

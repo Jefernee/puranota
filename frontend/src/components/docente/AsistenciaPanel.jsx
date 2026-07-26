@@ -11,7 +11,7 @@ import { listarEstudiantes } from '../../services/grupos.service'
 const ESTADOS = [
   { id: 'presente', label: 'Presente', corto: 'P', activo: 'bg-pizarra text-papel', idle: 'text-pizarra hover:bg-pizarra/10' },
   { id: 'ausente', label: 'Ausente', corto: 'A', activo: 'bg-margen text-papel', idle: 'text-margen hover:bg-margen/10' },
-  { id: 'tardia', label: 'Tardía', corto: 'T', activo: 'bg-guaria text-papel', idle: 'text-guaria hover:bg-guaria/10' },
+  { id: 'tardia', label: 'Tardía', corto: 'T', activo: 'bg-ambar text-papel', idle: 'text-ambar hover:bg-ambar/10' },
   { id: 'justificada', label: 'Justif.', corto: 'J', activo: 'bg-tinta text-papel', idle: 'text-tinta/70 hover:bg-tinta/10' },
 ]
 
@@ -139,7 +139,7 @@ export default function AsistenciaPanel({ grupo }) {
         <>
           <Alerta tipo="error">{error}</Alerta>
           {cargando ? (
-            <p className="text-sm text-tinta/60">Cargando…</p>
+            <p className="text-[15px] text-tinta/70">Cargando…</p>
           ) : estudiantes.length === 0 ? (
             <p className="text-sm text-tinta/60">
               No hay estudiantes activos en este grupo todavía.
@@ -178,7 +178,7 @@ export default function AsistenciaPanel({ grupo }) {
           <Alerta tipo="error">{error}</Alerta>
 
           {cargando ? (
-            <p className="text-sm text-tinta/60">Cargando…</p>
+            <p className="text-[15px] text-tinta/70">Cargando…</p>
           ) : estudiantes.length === 0 ? (
             <p className="text-sm text-tinta/60">
               No hay estudiantes activos en este grupo todavía.
@@ -192,7 +192,7 @@ export default function AsistenciaPanel({ grupo }) {
                     key={m.estudiante.id}
                     className="tarjeta-cuaderno flex flex-wrap items-center justify-between gap-2 px-4 py-3"
                   >
-                    <span className="min-w-0 flex-1 truncate font-medium text-tinta">
+                    <span className="min-w-0 flex-1 break-words font-medium text-tinta">
                       {m.estudiante.nombre || m.estudiante.correo}
                     </span>
                     <div className="flex gap-1">
@@ -226,7 +226,7 @@ export default function AsistenciaPanel({ grupo }) {
 }
 
 function ResumenTabla({ estudiantes, resumen, cargando }) {
-  if (cargando) return <p className="text-sm text-tinta/60">Calculando…</p>
+  if (cargando) return <p className="text-[15px] text-tinta/70">Calculando…</p>
   if (!resumen) return null
   const conteo = (m) =>
     resumen[m.estudiante.id] || { presente: 0, ausente: 0, tardia: 0, justificada: 0 }
@@ -237,14 +237,14 @@ function ResumenTabla({ estudiantes, resumen, cargando }) {
       {estudiantes.map((m) => {
         const r = conteo(m)
         return (
-          <li key={m.estudiante.id} className="tarjeta-cuaderno px-4 py-3 pl-6">
-            <p className="truncate font-medium text-tinta">
+          <li key={m.estudiante.id} className="tarjeta-cuaderno px-3.5 py-3 sm:px-4 sm:pl-6">
+            <p className="break-words font-medium text-tinta">
               {m.estudiante.nombre || m.estudiante.correo}
             </p>
             <div className="mt-1 flex flex-wrap gap-x-3 text-sm">
               <span className="text-pizarra">Presente: <b>{r.presente}</b></span>
               <span className="text-margen">Ausente: <b>{r.ausente}</b></span>
-              <span className="text-guaria">Tardía: <b>{r.tardia}</b></span>
+              <span className="text-ambar">Tardía: <b>{r.tardia}</b></span>
               <span className="text-tinta/70">Justif.: <b>{r.justificada}</b></span>
             </div>
           </li>
@@ -279,7 +279,7 @@ function ResumenTabla({ estudiantes, resumen, cargando }) {
                 </td>
                 <td className="px-2 py-1.5 text-center text-pizarra">{r.presente}</td>
                 <td className="px-2 py-1.5 text-center text-margen">{r.ausente}</td>
-                <td className="px-2 py-1.5 text-center text-guaria">{r.tardia}</td>
+                <td className="px-2 py-1.5 text-center text-ambar">{r.tardia}</td>
                 <td className="px-2 py-1.5 text-center text-tinta/70">{r.justificada}</td>
               </tr>
             )

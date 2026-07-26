@@ -125,7 +125,7 @@ export default function DashboardDocente() {
             <li key={g.id}>
               <Link
                 to={`/docente/grupos/${g.id}`}
-                className="tarjeta-cuaderno block px-5 py-4 pl-7 transition-shadow hover:shadow-md"
+                className="tarjeta-cuaderno block px-4 py-4 sm:px-5 sm:pl-7 transition-shadow hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-2">
                   <h2 className="text-lg font-bold leading-tight">{g.nombre}</h2>

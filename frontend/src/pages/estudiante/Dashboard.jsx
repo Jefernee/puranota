@@ -171,10 +171,10 @@ export default function DashboardEstudiante() {
                         className="group flex items-center gap-4 rounded-cuaderno border border-tinta/10 bg-superficie px-4 py-3.5 shadow-sm transition-colors hover:border-pizarra/40"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-semibold text-tinta">
+                          <p className="break-words font-semibold text-tinta">
                             {a.titulo}
                           </p>
-                          <p className="truncate text-sm text-tinta/65">
+                          <p className="break-words text-sm text-tinta/65">
                             {a.grupo?.nombre}
                           </p>
                         </div>
@@ -235,12 +235,12 @@ export default function DashboardEstudiante() {
                     {g.estado === 'activo' ? (
                       <Link
                         to={`/estudiante/grupos/${g.grupo.id}`}
-                        className="tarjeta-cuaderno group block h-full px-5 py-4 pl-7 transition-shadow hover:shadow-md"
+                        className="tarjeta-cuaderno group block h-full px-4 py-4 sm:px-5 sm:pl-7 transition-shadow hover:shadow-md"
                       >
                         <GrupoContenido g={g} />
                       </Link>
                     ) : (
-                      <div className="tarjeta-cuaderno block h-full px-5 py-4 pl-7 opacity-75">
+                      <div className="tarjeta-cuaderno block h-full px-4 py-4 sm:px-5 sm:pl-7 opacity-75">
                         <GrupoContenido g={g} />
                       </div>
                     )}
@@ -254,9 +254,9 @@ export default function DashboardEstudiante() {
         {/* Columna derecha: avisos + unirse a un grupo */}
         <aside className="space-y-4 lg:sticky lg:top-20">
           {/* Avisos del docente (cuadrito siempre visible) */}
-          <div className="tarjeta-cuaderno px-5 py-5 pl-7">
+          <div className="tarjeta-cuaderno px-4 py-4 sm:px-5 sm:py-5 sm:pl-7">
             <p className="mb-2 flex items-center gap-1.5 font-display text-base font-semibold text-tinta">
-              <span aria-hidden="true">📢</span> Avisos
+              Avisos
               {anuncios.length > 0 && (
                 <span className="text-sm font-medium text-tinta/55">
                   {anuncios.length}
@@ -264,7 +264,7 @@ export default function DashboardEstudiante() {
               )}
             </p>
             {cargando ? (
-              <p className="text-sm text-tinta/60">Cargando…</p>
+              <p className="text-[15px] text-tinta/70">Cargando…</p>
             ) : anuncios.length === 0 ? (
               <p className="text-sm text-tinta/65">No hay avisos por ahora.</p>
             ) : (
@@ -272,9 +272,9 @@ export default function DashboardEstudiante() {
                 {anuncios.map((a) => {
                   const grupoTxt = avisoGrupoTexto(a)
                   return (
-                    <li key={a.id} className="border-l-2 border-guaria/50 pl-3">
+                    <li key={a.id} className="border-l-2 border-tinta/25 pl-3">
                       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                        <span className="text-sm font-semibold uppercase tracking-wide text-guaria">
+                        <span className="text-sm font-semibold uppercase tracking-wide text-tinta/70">
                           {grupoTxt || 'Aviso'}
                         </span>
                         <span className="text-sm text-tinta/60">
@@ -291,7 +291,7 @@ export default function DashboardEstudiante() {
             )}
           </div>
 
-          <div className="tarjeta-cuaderno px-5 py-4 pl-7">
+          <div className="tarjeta-cuaderno px-4 py-4 sm:px-5 sm:pl-7">
             <p className="mb-2 font-display text-sm font-semibold text-tinta">
               Unirme a un grupo
             </p>

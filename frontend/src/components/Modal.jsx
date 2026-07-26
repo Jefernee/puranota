@@ -34,11 +34,11 @@ export default function Modal({ abierto, onCerrar, titulo, children, size = 'lg'
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-3">
-          <h2 className="text-xl font-bold text-tinta">{titulo}</h2>
+          <h2 className="text-lg font-bold text-tinta sm:text-xl">{titulo}</h2>
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-full px-2 py-0.5 text-2xl leading-none text-tinta/60 hover:bg-tinta/10 hover:text-tinta"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-xl leading-none text-tinta/60 transition-colors hover:bg-tinta/10 hover:text-tinta"
             aria-label="Cerrar"
           >
             ×

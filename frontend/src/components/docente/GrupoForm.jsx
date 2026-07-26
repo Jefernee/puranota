@@ -189,8 +189,8 @@ export default function GrupoForm({
         </p>
 
         {mepModalidad && PRESETS[mepModalidad] && (
-          <div className="mt-2 rounded-cuaderno border border-guaria/25 bg-guaria/5 px-3 py-2 text-sm text-tinta/75">
-            <p className="mb-1 font-medium text-guaria">
+          <div className="mt-2 rounded-cuaderno border border-tinta/12 bg-tinta/[0.03] px-3 py-2 text-sm text-tinta/75">
+            <p className="mb-1 font-medium text-tinta">
               Rubros que se van a cargar:
             </p>
             <ul className="flex flex-wrap gap-x-3 gap-y-0.5">

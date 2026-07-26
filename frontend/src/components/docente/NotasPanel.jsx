@@ -124,7 +124,7 @@ export default function NotasPanel({ grupo }) {
       {/* Encabezado + selector de periodo */}
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-tinta/10 pb-3">
         <div>
-          <h2 className="text-xl font-bold text-tinta">Registro de calificaciones</h2>
+          <h2 className="text-lg font-bold text-tinta sm:text-xl">Registro de calificaciones</h2>
           <p className="text-[15px] text-tinta/70">
             Evaluado: <b className="text-tinta/80">{pct(evaluado, 0)}</b> de 100%
           </p>
@@ -169,7 +169,7 @@ export default function NotasPanel({ grupo }) {
       )}
 
       {cargando ? (
-        <p className="text-sm text-tinta/65">Calculando notas…</p>
+        <p className="text-[15px] text-tinta/70">Calculando notas…</p>
       ) : rubros.length === 0 ? (
         <Alerta tipo="info">
           Definí los rubros del {etiquetaPeriodo(periodo)} (pestaña Rubros) para

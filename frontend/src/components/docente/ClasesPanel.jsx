@@ -140,7 +140,7 @@ export default function ClasesPanel({ grupoId }) {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-tinta/10 pb-3">
             <div className="flex min-w-0 items-center gap-3">
               <Volver onClick={() => setVerClase(null)}>Clases</Volver>
-              <h2 className="min-w-0 truncate text-xl font-bold text-tinta sm:text-2xl">
+              <h2 className="min-w-0 break-words text-xl font-bold text-tinta sm:text-2xl">
                 {verClase.titulo}
               </h2>
             </div>
@@ -198,7 +198,7 @@ export default function ClasesPanel({ grupoId }) {
             <li
               key={c.id}
               onClick={() => setVerClase(c)}
-              className="tarjeta-cuaderno cursor-pointer px-5 py-4 pl-7 transition-shadow hover:shadow-md"
+              className="tarjeta-cuaderno cursor-pointer px-4 py-4 sm:px-5 sm:pl-7 transition-shadow hover:shadow-md"
               title="Abrir la clase"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">

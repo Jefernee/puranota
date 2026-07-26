@@ -1,18 +1,25 @@
-// Mensaje de error / éxito / info en español, accesible (role apropiado).
+// Mensaje de error / éxito / info / advertencia, accesible (role apropiado).
+//
+// Sobrio a propósito: una franja de color al costado y el texto en tinta, en
+// vez de un recuadro entero teñido. El color señala el tipo sin gritar, y el
+// texto se lee igual de bien en modo claro y oscuro.
+
 export default function Alerta({ tipo = 'error', children }) {
   if (!children) return null
 
-  const estilos = {
-    error: 'border-margen/30 bg-margen/10 text-margen',
-    exito: 'border-pizarra/30 bg-pizarra/10 text-pizarra',
-    info: 'border-guaria/30 bg-guaria/10 text-guaria',
-    advertencia: 'border-amber-500/30 bg-amber-500/10 text-amber-700',
+  const franja = {
+    error: 'border-l-margen',
+    exito: 'border-l-pizarra',
+    info: 'border-l-tinta/35',
+    advertencia: 'border-l-ambar',
   }
 
   return (
     <div
       role={tipo === 'error' ? 'alert' : 'status'}
-      className={`rounded-cuaderno border px-3.5 py-2.5 text-sm ${estilos[tipo]}`}
+      className={`rounded-cuaderno border border-tinta/12 border-l-4 bg-superficie px-4 py-3 text-[15px] leading-relaxed text-tinta/85 shadow-sm ${
+        franja[tipo] || franja.error
+      }`}
     >
       {children}
     </div>

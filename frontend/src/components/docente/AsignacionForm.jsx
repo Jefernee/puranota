@@ -145,9 +145,9 @@ export default function AsignacionForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5" noValidate>
       {/* Lo esencial */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
           <label htmlFor="a-titulo" className="etiqueta">
             Título
@@ -167,7 +167,7 @@ export default function AsignacionForm({
           </label>
           <textarea
             id="a-instrucciones"
-            className="campo min-h-[90px] resize-y"
+            className="campo min-h-[68px] resize-y"
             placeholder="Qué deben hacer y entregar…"
             value={instrucciones}
             onChange={(e) => setInstrucciones(e.target.value)}
@@ -371,7 +371,7 @@ export default function AsignacionForm({
                   key={a.url}
                   className="flex items-center justify-between gap-2 rounded-cuaderno bg-tinta/5 px-3 py-1.5 text-sm"
                 >
-                  <span className="truncate text-tinta/80">{a.nombre}</span>
+                  <span className="break-words text-tinta/80">{a.nombre}</span>
                   <button
                     type="button"
                     onClick={() =>
@@ -385,8 +385,8 @@ export default function AsignacionForm({
               ))}
             </ul>
           )}
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-cuaderno border border-dashed border-tinta/30 px-4 py-2.5 text-sm text-tinta/70 hover:border-pizarra hover:text-pizarra">
-            <span>+ Elegir archivos</span>
+          <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-cuaderno border border-dashed border-tinta/30 px-4 py-3 text-[15px] font-medium text-tinta/75 transition-colors hover:border-pizarra hover:text-pizarra active:bg-pizarra/[0.06] sm:inline-flex sm:w-auto">
+            <span>Elegir archivos</span>
             <input
               type="file"
               multiple
@@ -406,7 +406,7 @@ export default function AsignacionForm({
                   key={i}
                   className="flex items-center justify-between gap-2 rounded-cuaderno bg-pizarra/5 px-3 py-1.5 text-sm"
                 >
-                  <span className="truncate text-tinta/80">{f.name}</span>
+                  <span className="break-words text-tinta/80">{f.name}</span>
                   <button
                     type="button"
                     onClick={() =>
@@ -446,11 +446,11 @@ export default function AsignacionForm({
 
       <Alerta tipo="error">{error}</Alerta>
 
-      <div className="flex justify-end gap-3 pt-2">
-        <button type="button" onClick={onCancelar} className="btn-secundario">
+      <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end sm:gap-3">
+        <button type="button" onClick={onCancelar} className="btn-secundario w-full justify-center sm:w-auto">
           Cancelar
         </button>
-        <button type="submit" className="btn-primario" disabled={guardando}>
+        <button type="submit" className="btn-primario w-full justify-center sm:w-auto" disabled={guardando}>
           {guardando ? 'Guardando…' : textoBoton}
         </button>
       </div>
@@ -461,8 +461,8 @@ export default function AsignacionForm({
 // Bloque de sección con encabezado sutil y separador, para ordenar el formulario.
 function Seccion({ titulo, children }) {
   return (
-    <div className="space-y-4 border-t border-tinta/10 pt-5">
-      <p className="text-sm font-semibold uppercase tracking-wide text-tinta/60">
+    <div className="space-y-3 border-t border-tinta/10 pt-4">
+      <p className="text-[13px] font-semibold uppercase tracking-wide text-tinta/65">
         {titulo}
       </p>
       {children}

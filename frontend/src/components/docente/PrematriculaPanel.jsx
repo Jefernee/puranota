@@ -73,7 +73,7 @@ export default function PrematriculaPanel({ grupoId }) {
 
   return (
     <div className="space-y-4">
-      <div className="tarjeta-cuaderno px-5 py-4 pl-7">
+      <div className="tarjeta-cuaderno px-4 py-4 sm:px-5 sm:pl-7">
         <label htmlFor="prem" className="etiqueta">
           Pegá la lista de correos
         </label>
@@ -125,7 +125,7 @@ export default function PrematriculaPanel({ grupoId }) {
               key={p.id}
               className="flex items-center justify-between gap-3 px-4 py-2.5"
             >
-              <span className="truncate text-sm text-tinta">{p.correo}</span>
+              <span className="break-words text-sm text-tinta">{p.correo}</span>
               <div className="flex items-center gap-2">
                 {p.usado ? (
                   <span className="rounded-full bg-pizarra/10 px-2 py-0.5 text-sm font-medium text-pizarra">

@@ -108,7 +108,7 @@ export default function EstudiantesPanel({ grupoId }) {
         <p className="text-sm text-tinta/70">
           {estudiantes.length} matriculado{estudiantes.length === 1 ? '' : 's'}
           {pendientes > 0 && (
-            <span className="ml-2 rounded-full bg-guaria/10 px-2 py-0.5 text-sm font-medium text-guaria">
+            <span className="ml-2 rounded-full bg-ambar/12 px-2 py-0.5 text-sm font-medium text-ambar">
               {pendientes} pendiente{pendientes === 1 ? '' : 's'}
             </span>
           )}
@@ -132,10 +132,10 @@ export default function EstudiantesPanel({ grupoId }) {
               className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
             >
               <div className="min-w-0">
-                <p className="truncate font-medium text-tinta">
+                <p className="break-words font-medium text-tinta">
                   {e.estudiante?.nombre || '(sin nombre todavía)'}
                 </p>
-                <p className="truncate text-sm text-tinta/60">
+                <p className="break-words text-sm text-tinta/60">
                   {e.estudiante?.correo}
                   {e.estudiante?.seccion ? ` · ${e.estudiante.seccion}` : ''}
                 </p>
@@ -143,7 +143,7 @@ export default function EstudiantesPanel({ grupoId }) {
 
               <div className="flex w-full flex-wrap items-center gap-1.5 sm:w-auto">
                 {e.estado === 'pendiente' ? (
-                  <span className="rounded-full bg-guaria/10 px-2.5 py-0.5 text-sm font-medium text-guaria">
+                  <span className="rounded-full bg-ambar/12 px-2.5 py-0.5 text-sm font-medium text-ambar">
                     Pendiente
                   </span>
                 ) : (
@@ -165,7 +165,7 @@ export default function EstudiantesPanel({ grupoId }) {
                 {e.estudiante?.id && (
                   <button
                     onClick={() => abrirReset(e.estudiante)}
-                    className="btn-accion text-guaria hover:bg-guaria/10"
+                    className="btn-accion text-pizarra hover:bg-pizarra/10"
                     title="Resetear contraseña"
                   >
                     Resetear clave
@@ -263,11 +263,11 @@ export default function EstudiantesPanel({ grupoId }) {
               </strong>
               . Pasásela y pedile que la cambie al entrar:
             </p>
-            <div className="flex items-center justify-between gap-3 rounded-cuaderno border border-guaria/30 bg-guaria/10 px-4 py-3">
+            <div className="flex items-center justify-between gap-3 rounded-cuaderno border border-tinta/15 bg-tinta/[0.03] px-4 py-3">
               <code className="select-all font-mono text-xl font-bold tracking-wider text-tinta">
                 {resetClave}
               </code>
-              <button className="btn-secundario px-3 py-1.5 text-sm" onClick={copiarClave}>
+              <button className="btn-secundario min-h-[40px] px-4 text-sm" onClick={copiarClave}>
                 {copiado ? 'Copiado ✓' : 'Copiar'}
               </button>
             </div>

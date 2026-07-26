@@ -195,7 +195,7 @@ export default function AsignacionesPanel({ grupo }) {
                       {a.porcentaje != null ? ` · ${a.porcentaje}%` : ''}
                     </span>
                     {a.clase_id && (
-                      <span className="max-w-full truncate rounded-full bg-guaria/10 px-2.5 py-0.5 font-medium text-guaria">
+                      <span className="max-w-full truncate rounded-full bg-tinta/[0.06] px-2.5 py-0.5 font-medium text-tinta/75">
                         🎬 {clases.find((c) => c.id === a.clase_id)?.titulo || 'Clase'}
                       </span>
                     )}

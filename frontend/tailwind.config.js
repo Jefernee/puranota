@@ -14,6 +14,7 @@ export default {
         pizarra: 'rgb(var(--c-pizarra) / <alpha-value>)', // primario "verde pizarra"
         guaria: 'rgb(var(--c-guaria) / <alpha-value>)', // acento "guaria morada"
         margen: 'rgb(var(--c-margen) / <alpha-value>)', // margen "rojo cuaderno"
+        ambar: 'rgb(var(--c-ambar) / <alpha-value>)', // advertencias
       },
       fontFamily: {
         display: ['"Bricolage Grotesque"', 'system-ui', 'sans-serif'],

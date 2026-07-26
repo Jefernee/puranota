@@ -178,7 +178,7 @@ export default function GrupoEstudiante() {
                       >
                         {i + 1}
                       </span>
-                      <span className="hidden min-w-0 items-center gap-1 truncate lg:flex">
+                      <span className="hidden min-w-0 items-center gap-1 break-words lg:flex">
                         {c.titulo}
                         {tieneVideo(c) && <span className="shrink-0 text-sm">▶</span>}
                       </span>
@@ -193,10 +193,10 @@ export default function GrupoEstudiante() {
               <article className="min-w-0 space-y-4">
                 <header className="flex items-start justify-between gap-4 border-b border-tinta/10 pb-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold uppercase tracking-wide text-guaria">
+                    <p className="text-sm font-semibold uppercase tracking-wide text-tinta/60">
                       Clase {idxClase + 1} de {clases.length}
                     </p>
-                    <h2 className="text-xl font-bold leading-tight text-tinta sm:text-2xl">
+                    <h2 className="text-lg font-bold leading-snug text-tinta sm:text-2xl">
                       {claseActiva.titulo}
                     </h2>
                   </div>
@@ -232,7 +232,7 @@ export default function GrupoEstudiante() {
                 {actividadesDeClase.length > 0 && (
                   <div className="rounded-cuaderno border border-tinta/10 bg-tinta/[0.02] p-4">
                     <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-tinta/80">
-                      <span aria-hidden="true">📝</span> Actividades de esta clase
+                      Actividades de esta clase
                     </p>
                     <ul className="space-y-2">
                       {actividadesDeClase.map(({ asignacion: a, entrega }) => {
@@ -247,10 +247,10 @@ export default function GrupoEstudiante() {
                                 📝
                               </span>
                               <div className="min-w-0 flex-1">
-                                <p className="truncate font-semibold text-tinta">
+                                <p className="break-words font-semibold text-tinta">
                                   {a.titulo}
                                 </p>
-                                <p className="truncate text-sm text-tinta/65">
+                                <p className="break-words text-sm text-tinta/65">
                                   {etiquetaPeriodo(a.periodo)} · {a.puntos} pts
                                   {a.fecha_limite &&
                                     ` · Entrega ${formatearFecha(a.fecha_limite, false)}`}
@@ -284,10 +284,9 @@ export default function GrupoEstudiante() {
 
   return (
     <Layout ancho="amplio">
-      <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-tinta/10 pb-3">
+      <div className="mb-4 border-b border-tinta/10 pb-3">
         <Volver to="/estudiante">Mi cuaderno</Volver>
-        <span className="text-tinta/25" aria-hidden="true">/</span>
-        <h1 className="text-xl font-bold leading-tight text-tinta sm:text-2xl">
+        <h1 className="mt-2 min-w-0 break-words text-lg font-bold leading-snug text-tinta sm:text-2xl">
           {[tituloGrupo, ...chipsGrupo].join(' · ')}
         </h1>
       </div>

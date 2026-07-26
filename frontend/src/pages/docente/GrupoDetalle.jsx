@@ -193,7 +193,7 @@ export default function GrupoDetalle() {
                 setConfirmarBorrar(true)
               }}
             >
-              <span aria-hidden="true">🗑️</span> Eliminar grupo
+              Eliminar grupo
             </button>
           </div>
         </div>
@@ -203,19 +203,20 @@ export default function GrupoDetalle() {
 
   return (
     <Layout ancho="amplio">
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-x-4 gap-y-3 border-b border-tinta/10 pb-4">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
-          <Volver to="/docente">Mis grupos</Volver>
-          <span className="text-tinta/25" aria-hidden="true">/</span>
-          <h1 className="min-w-0 break-words text-xl font-bold leading-tight text-tinta sm:text-2xl">
-            {[tituloGrupo, ...chipsGrupo].join(' · ')}
-          </h1>
-          <span className="text-sm font-medium text-tinta">
-            {grupo.anio} · {cantidadPeriodos(grupo)} periodos
-            {!grupo.activo && ' · inactivo'}
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      {/* Encabezado compacto: el volver arriba, y el título con el código en la
+          misma línea. En celular el contenido del grupo empieza mucho antes. */}
+      <div className="mb-4 border-b border-tinta/10 pb-3">
+        <Volver to="/docente">Mis grupos</Volver>
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <div className="min-w-0">
+            <h1 className="min-w-0 break-words text-lg font-bold leading-snug text-tinta sm:text-2xl">
+              {[tituloGrupo, ...chipsGrupo].join(' · ')}
+            </h1>
+            <p className="mt-0.5 text-sm text-tinta/65">
+              {grupo.anio} · {cantidadPeriodos(grupo)} periodos
+              {!grupo.activo && ' · inactivo'}
+            </p>
+          </div>
           <CodigoAcceso
             grupoId={grupo.id}
             codigo={grupo.codigo_acceso}

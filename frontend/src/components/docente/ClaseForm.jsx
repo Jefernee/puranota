@@ -180,7 +180,7 @@ export default function ClaseForm({
                 key={v.id}
                 className="flex items-center justify-between gap-2 rounded-cuaderno bg-tinta/5 px-3 py-1.5 text-sm"
               >
-                <span className="truncate text-tinta/80">🎬 {v.nombre}</span>
+                <span className="break-words text-tinta/80">🎬 {v.nombre}</span>
                 <button
                   type="button"
                   onClick={() => quitarExistente(v.id)}
@@ -197,7 +197,7 @@ export default function ClaseForm({
                 key={i}
                 className="flex items-center justify-between gap-2 rounded-cuaderno bg-pizarra/5 px-3 py-1.5 text-sm"
               >
-                <span className="truncate text-tinta/80">🎬 {f.name}</span>
+                <span className="break-words text-tinta/80">🎬 {f.name}</span>
                 <button
                   type="button"
                   onClick={() => setVideos((prev) => prev.filter((_, idx) => idx !== i))}
@@ -252,7 +252,7 @@ export default function ClaseForm({
                 key={a.id}
                 className="flex items-center justify-between gap-2 rounded-cuaderno bg-tinta/5 px-3 py-1.5 text-sm"
               >
-                <span className="truncate text-tinta/80">{a.nombre}</span>
+                <span className="break-words text-tinta/80">{a.nombre}</span>
                 <button
                   type="button"
                   onClick={() => quitarExistente(a.id)}
@@ -290,7 +290,7 @@ export default function ClaseForm({
                 key={i}
                 className="flex items-center justify-between gap-2 rounded-cuaderno bg-pizarra/5 px-3 py-1.5 text-sm"
               >
-                <span className="truncate text-tinta/80">{f.name}</span>
+                <span className="break-words text-tinta/80">{f.name}</span>
                 <button
                   type="button"
                   onClick={() => setSeleccion((prev) => prev.filter((_, idx) => idx !== i))}

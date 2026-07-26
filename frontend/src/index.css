@@ -13,6 +13,7 @@
     --c-pizarra: 23 107 77; /* #176B4D */
     --c-guaria: 138 79 190; /* #8A4FBE */
     --c-margen: 226 87 76; /* #E2574C */
+    --c-ambar: 176 116 24; /* #B07418 — advertencias */
   }
 
   :root[data-theme='dark'] {
@@ -25,6 +26,7 @@
     --c-pizarra: 60 208 167; /* esmeralda (#3CD0A7) */
     --c-guaria: 187 146 240; /* morado (#BB92F0) */
     --c-margen: 246 122 112; /* coral (#F67A70) */
+    --c-ambar: 224 182 92; /* #E0B65C — advertencias */
   }
 
   html {

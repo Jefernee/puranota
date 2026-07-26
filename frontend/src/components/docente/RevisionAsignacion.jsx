@@ -136,7 +136,7 @@ export default function RevisionAsignacion({ asignacionId, onVolver }) {
               Volver al grupo
             </Volver>
           )}
-          <h1 className="min-w-0 break-words text-xl font-bold leading-tight sm:text-2xl">
+          <h1 className="min-w-0 break-words text-lg font-bold leading-snug sm:text-2xl">
             {asignacion.titulo}
           </h1>
         </div>
@@ -152,20 +152,27 @@ export default function RevisionAsignacion({ asignacionId, onVolver }) {
         </p>
       </div>
 
-      {/* Filtros */}
-      <div className="mb-4 flex flex-wrap gap-1.5">
+      {/* Filtros en UNA sola fila que se desliza. Antes eran cinco pastillas que
+          envolvían en dos o tres renglones y se comían la pantalla antes de
+          llegar a la lista de estudiantes, que es lo que se viene a ver. */}
+      <div className="scroll-tabs -mx-1 mb-4 px-1 pb-1">
         {FILTROS.map((f) => (
           <button
             key={f.id}
             onClick={() => setFiltro(f.id)}
-            className={`rounded-cuaderno border px-3.5 py-1.5 text-sm font-semibold shadow-sm transition-colors ${
+            className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-cuaderno border px-3 py-2 text-sm font-semibold shadow-sm transition-colors ${
               filtro === f.id
                 ? 'border-pizarra bg-pizarra text-papel'
                 : 'border-tinta/15 bg-superficie text-tinta/70 hover:border-pizarra/40 hover:text-pizarra'
             }`}
+            aria-pressed={filtro === f.id}
           >
-            {f.label}{' '}
-            <span className={filtro === f.id ? 'text-papel/70' : 'text-tinta/55'}>
+            {f.label}
+            <span
+              className={`rounded-full px-1.5 text-[13px] tabular-nums ${
+                filtro === f.id ? 'bg-papel/20 text-papel' : 'bg-tinta/[0.08] text-tinta/60'
+              }`}
+            >
               {conteos[f.id]}
             </span>
           </button>
@@ -191,10 +198,10 @@ export default function RevisionAsignacion({ asignacionId, onVolver }) {
                     {(f.estudiante.nombre?.trim()?.[0] || '?').toUpperCase()}
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-tinta">
+                    <p className="break-words font-medium text-tinta">
                       {f.estudiante.nombre || f.estudiante.correo}
                     </p>
-                    <p className="truncate text-sm text-tinta/65">
+                    <p className="break-words text-sm text-tinta/65">
                       {f.entrega?.estado === 'calificada' && f.entrega.nota != null
                         ? `Nota: ${f.entrega.nota} / ${asignacion.puntos}`
                         : f.entrega

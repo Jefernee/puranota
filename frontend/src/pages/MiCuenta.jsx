@@ -37,7 +37,7 @@ export default function MiCuenta() {
           <span
             className={`rounded-full border px-3 py-1 text-sm font-medium ${
               esDocente
-                ? 'border-guaria/20 bg-guaria/10 text-guaria'
+                ? 'border-tinta/15 bg-tinta/[0.04] text-tinta/80'
                 : 'border-pizarra/20 bg-pizarra/10 text-pizarra'
             }`}
           >
@@ -103,7 +103,7 @@ function DatosPersonales({ perfil }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="tarjeta-cuaderno space-y-3 px-5 py-4 pl-7"
+      className="tarjeta-cuaderno space-y-3 px-4 py-4 sm:px-5 sm:pl-7"
       noValidate
     >
       <p className="font-display text-base font-semibold text-tinta">
@@ -203,7 +203,7 @@ function CambiarClave() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="tarjeta-cuaderno space-y-3 px-5 py-4 pl-7" noValidate>
+    <form onSubmit={handleSubmit} className="tarjeta-cuaderno space-y-3 px-4 py-4 sm:px-5 sm:pl-7" noValidate>
       <p className="font-display text-base font-semibold text-tinta">
         Cambiar contraseña
       </p>
@@ -270,7 +270,7 @@ function PreguntaSeguridad({ perfil }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="tarjeta-cuaderno space-y-3 px-5 py-4 pl-7" noValidate>
+    <form onSubmit={handleSubmit} className="tarjeta-cuaderno space-y-3 px-4 py-4 sm:px-5 sm:pl-7" noValidate>
       <p className="font-display text-base font-semibold text-tinta">
         Pregunta de seguridad
       </p>

@@ -138,7 +138,7 @@ export default function RubrosEditor({ grupo, onGuardar }) {
     estado === 'ok'
       ? 'border-pizarra/30 bg-pizarra/10 text-pizarra'
       : estado === 'falta'
-        ? 'border-amber-500/40 bg-amber-50 text-amber-700'
+        ? 'border-ambar/40 bg-ambar/10 text-ambar'
         : 'border-margen/40 bg-margen/10 text-margen'
   const estadoTexto =
     estado === 'ok'
@@ -146,8 +146,17 @@ export default function RubrosEditor({ grupo, onGuardar }) {
       : estado === 'falta'
         ? `Te faltan ${faltante}% para llegar a 100`
         : `Te pasaste ${-faltante}% — bajá algún peso`
-  // Colores para la barra visual del reparto (uno por rubro; asistencia en morado).
-  const COLORES = ['#176B4D', '#C98A00', '#2A6F97', '#6B8E23', '#B5651D', '#4C6EF5']
+  // Barra de reparto en una sola familia de color, de más a menos intenso.
+  // Antes eran seis colores fijos distintos —un arcoíris que se veía decorativo
+  // y que, al ser hexadecimales, no cambiaba con el tema oscuro.
+  const COLORES = [
+    'rgb(var(--c-pizarra))',
+    'rgb(var(--c-pizarra) / 0.72)',
+    'rgb(var(--c-pizarra) / 0.48)',
+    'rgb(var(--c-tinta) / 0.45)',
+    'rgb(var(--c-tinta) / 0.30)',
+    'rgb(var(--c-tinta) / 0.18)',
+  ]
   const segmentos = [
     ...listaActiva.map((r, i) => ({
       nombre: (r.nombre || '').trim() || 'Rubro',
@@ -155,7 +164,7 @@ export default function RubrosEditor({ grupo, onGuardar }) {
       color: COLORES[i % COLORES.length],
     })),
     ...(asisActiva.activa && sumaAsis > 0
-      ? [{ nombre: 'Asistencia', pct: sumaAsis, color: '#8A4FBE' }]
+      ? [{ nombre: 'Asistencia', pct: sumaAsis, color: 'rgb(var(--c-tinta) / 0.60)' }]
       : []),
   ].filter((s) => s.pct > 0)
 
@@ -362,8 +371,8 @@ export default function RubrosEditor({ grupo, onGuardar }) {
       )}
 
       {presetMEP && (
-        <div className="rounded-cuaderno border border-guaria/25 bg-guaria/5 px-3 py-2 text-sm text-tinta/75">
-          <b className="text-guaria">MEP:</b> {presetMEP.label}
+        <div className="rounded-cuaderno border border-tinta/12 bg-tinta/[0.03] px-3 py-2 text-sm text-tinta/75">
+          <b className="text-tinta">MEP:</b> {presetMEP.label}
         </div>
       )}
 
@@ -423,7 +432,7 @@ export default function RubrosEditor({ grupo, onGuardar }) {
               <div className="flex items-center gap-2">
                 <div className="campo flex min-w-0 flex-1 items-center gap-2 bg-tinta/[0.04] text-base text-tinta">
                   <span className="shrink-0 font-medium">Asistencia</span>
-                  <span className="truncate text-sm text-tinta/65">
+                  <span className="break-words text-sm text-tinta/65">
                     <span className="sm:hidden">automática</span>
                     <span className="hidden sm:inline">
                       se calcula sola · igual en todos los periodos
@@ -478,7 +487,7 @@ export default function RubrosEditor({ grupo, onGuardar }) {
               <button
                 type="button"
                 onClick={copiarDelPrimero}
-                className="text-sm font-semibold text-guaria hover:underline"
+                className="text-sm font-semibold text-pizarra hover:underline"
               >
                 Usar los mismos del I Periodo
               </button>
@@ -517,7 +526,7 @@ export default function RubrosEditor({ grupo, onGuardar }) {
                         className="h-2.5 w-2.5 shrink-0 rounded-full"
                         style={{ backgroundColor: s.color }}
                       />
-                      <span className="truncate">{s.nombre}</span>
+                      <span className="break-words">{s.nombre}</span>
                     </span>
                     <span className="font-semibold text-tinta">{s.pct}%</span>
                   </li>
@@ -557,7 +566,7 @@ export default function RubrosEditor({ grupo, onGuardar }) {
                   key={r.de}
                   className="flex items-center justify-between gap-2 rounded-cuaderno bg-pizarra/5 px-3 py-1.5 text-sm"
                 >
-                  <span className="min-w-0 truncate text-tinta">
+                  <span className="min-w-0 break-words text-tinta">
                     <b>{r.de}</b> → <b>{r.a}</b>
                   </span>
                   <span className="shrink-0 text-tinta/60">

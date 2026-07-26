@@ -69,7 +69,7 @@ export default function RubricaEditor({ value = [], onChange, puntosTotales }) {
       <button
         type="button"
         onClick={agregar}
-        className="inline-flex items-center gap-1 rounded-cuaderno bg-pizarra/10 px-3 py-1.5 text-sm font-semibold text-pizarra transition-colors hover:bg-pizarra/20"
+        className="inline-flex min-h-[40px] items-center gap-1 rounded-cuaderno bg-pizarra/10 px-4 text-sm font-semibold text-pizarra transition-colors hover:bg-pizarra/20"
       >
         + Agregar criterio
       </button>

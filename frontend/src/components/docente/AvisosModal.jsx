@@ -81,7 +81,7 @@ export default function AvisosModal({ abierto, onCerrar, docenteId, grupos }) {
   }
 
   return (
-    <Modal abierto={abierto} onCerrar={onCerrar} titulo="📢 Avisos" size="ancho">
+    <Modal abierto={abierto} onCerrar={onCerrar} titulo="Avisos" size="ancho">
       <form onSubmit={enviar}>
         <label htmlFor="msg-aviso" className="etiqueta">
           Mensaje para tus estudiantes
@@ -147,10 +147,10 @@ export default function AvisosModal({ abierto, onCerrar, docenteId, grupos }) {
                       ✓
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-tinta">
+                      <span className="block break-words text-sm font-semibold text-tinta">
                         {g.nombre}
                       </span>
-                      <span className="block truncate text-sm text-tinta/65">
+                      <span className="block break-words text-sm text-tinta/65">
                         {detalle}
                       </span>
                     </span>
@@ -181,7 +181,7 @@ export default function AvisosModal({ abierto, onCerrar, docenteId, grupos }) {
       <div className="mt-6 border-t border-tinta/10 pt-4">
         <h3 className="mb-3 font-display text-base font-bold">Enviados</h3>
         {cargando ? (
-          <p className="text-sm text-tinta/65">Cargando…</p>
+          <p className="text-[15px] text-tinta/70">Cargando…</p>
         ) : anuncios.length === 0 ? (
           <p className="text-sm text-tinta/65">Todavía no enviaste ningún aviso.</p>
         ) : (
