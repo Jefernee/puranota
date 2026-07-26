@@ -6,7 +6,9 @@
 > entienda todo el sistema sin abrir otra cosa.
 >
 > - `CLAUDE.md` (este archivo) → **qué es, cómo funciona, cómo se calcula todo.**
-> - `README.md` → historial de decisiones (ADR-001 … ADR-006). Contexto de *por
+> - `README.md` → presentación del proyecto y cómo correrlo.
+> - `docs/PLAN.md` → decisiones cerradas y orden de trabajo (a dónde va).
+> - `docs/ADR.md` → historial de decisiones (ADR-001 … ADR-006). Contexto de *por
 >   qué* se llegó acá. Si hay contradicción, **manda este archivo**.
 > - `backend/aula_cr_fase1_schema.sql` → el SQL original de Fase 1. **Está
 >   desactualizado**: faltan las columnas agregadas después (ver §6).
@@ -101,7 +103,7 @@ VITE_SUPABASE_ANON_KEY=<anon key — es pública, viaja en el frontend>
 ```
 C:\puranota\
   CLAUDE.md                  ← este documento (fuente de verdad)
-  README.md                  ← ADRs / historial de decisiones
+  README.md                  ← presentación del proyecto y cómo correrlo
   backend/
     aula_cr_fase1_schema.sql ← SQL original (desactualizado, ver §6)
   supabase/functions/
@@ -111,8 +113,11 @@ C:\puranota\
     resetear-clave-estudiante/
     cambiar-correo/
   docs/
+    PLAN.md                  ← plan de trabajo y decisiones cerradas
+    ADR.md                   ← historial de decisiones (ADR-001 … ADR-006)
     keep-alive.md            ← cómo evitar que Supabase se pause (ver §11)
     mep/                     ← reglamento REAC 2026 (PDF + texto + notas)
+  imagenes/                  ← referencia visual de diseño (Aula Virtual UISIL)
   scripts/
     keep-alive-supabase.ps1  ← ping local por tarea programada de Windows
     keep-alive.log
