@@ -15,7 +15,6 @@ import {
   diasRegistrados,
   pct,
 } from '../../lib/notas'
-import { tipoDe } from '../../lib/entregas'
 import { umbralDeModalidad } from '../../lib/mep'
 
 // REGISTRO DE CALIFICACIONES del grupo (ver docs/PLAN.md §3.6).
@@ -125,8 +124,8 @@ export default function NotasPanel({ grupo }) {
       {/* Encabezado + selector de periodo */}
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-tinta/10 pb-3">
         <div>
-          <h2 className="text-lg font-bold text-tinta">Registro de calificaciones</h2>
-          <p className="text-sm text-tinta/65">
+          <h2 className="text-xl font-bold text-tinta">Registro de calificaciones</h2>
+          <p className="text-[15px] text-tinta/70">
             Evaluado: <b className="text-tinta/80">{pct(evaluado, 0)}</b> de 100%
           </p>
         </div>
@@ -136,7 +135,7 @@ export default function NotasPanel({ grupo }) {
               key={p}
               type="button"
               onClick={() => setPeriodo(p)}
-              className={`rounded-cuaderno border px-3.5 py-2 text-sm font-semibold shadow-sm transition-colors ${
+              className={`min-h-[44px] rounded-cuaderno border px-4 text-[15px] font-semibold shadow-sm transition-colors ${
                 periodo === p
                   ? 'border-pizarra bg-pizarra text-papel'
                   : 'border-tinta/15 bg-superficie text-tinta/70 hover:border-pizarra/40 hover:text-pizarra'
@@ -186,18 +185,18 @@ export default function NotasPanel({ grupo }) {
         <>
           {/* ── ESCRITORIO: registro completo, con la columna Estudiante fija ── */}
           <div className="hidden overflow-x-auto rounded-cuaderno border border-tinta/15 bg-superficie shadow-sm md:block">
-            <table className="w-full text-sm">
+            <table className="w-full text-[15px]">
               <thead>
-                <tr className="border-b border-tinta/25 text-[11px] uppercase tracking-wide text-tinta/60">
+                <tr className="border-b border-tinta/25 text-[13px] uppercase tracking-wide text-tinta/65">
                   <th className="sticky left-0 z-10 bg-superficie px-4 py-2.5 text-left font-semibold">
                     Estudiante
                   </th>
                   {columnas.map((a) => (
                     <th key={a.id} className="px-3 py-2.5 text-center font-semibold">
                       <span className="block max-w-[9rem] truncate" title={a.titulo}>
-                        {tipoDe(a).icono} {a.titulo}
+                        {a.titulo}
                       </span>
-                      <span className="block text-[11px] font-normal normal-case text-tinta/55">
+                      <span className="block text-[13px] font-normal normal-case text-tinta/60">
                         {a.porcentaje == null ? 'sin %' : `${a.porcentaje}%`}
                       </span>
                     </th>
@@ -205,14 +204,14 @@ export default function NotasPanel({ grupo }) {
                   {hayAsistencia && (
                     <th className="px-3 py-2.5 text-center font-semibold">
                       ✓ Asistencia
-                      <span className="block text-[11px] font-normal normal-case text-tinta/55">
+                      <span className="block text-[13px] font-normal normal-case text-tinta/60">
                         {filas[0]?.asistencia?.valor ?? 0}%
                       </span>
                     </th>
                   )}
                   <th className="px-4 py-2.5 text-center font-semibold">
                     Nota
-                    <span className="block text-[11px] font-normal normal-case text-tinta/55">
+                    <span className="block text-[13px] font-normal normal-case text-tinta/60">
                       /100%
                     </span>
                   </th>
@@ -287,7 +286,7 @@ export default function NotasPanel({ grupo }) {
             {filas.map((f) => (
               <li key={f.estudiante.id}>
                 <details className="group">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3">
+                  <summary className="flex min-h-[52px] cursor-pointer list-none items-center justify-between gap-3 py-3">
                     <span className="flex min-w-0 items-center gap-2">
                       <span
                         className="text-tinta/40 transition-transform group-open:rotate-90"
@@ -295,7 +294,7 @@ export default function NotasPanel({ grupo }) {
                       >
                         ›
                       </span>
-                      <span className="min-w-0 truncate font-medium text-tinta">
+                      <span className="min-w-0 break-words font-medium text-tinta">
                         {f.estudiante.nombre || f.estudiante.correo}
                       </span>
                     </span>
@@ -309,9 +308,9 @@ export default function NotasPanel({ grupo }) {
                     {f.filas.map((celda, i) => (
                       <li
                         key={columnas[i].id}
-                        className="flex items-baseline justify-between gap-3 text-sm"
+                        className="flex items-baseline justify-between gap-3 text-[15px]"
                       >
-                        <span className="min-w-0 truncate text-tinta/75">
+                        <span className="min-w-0 break-words text-tinta/75">
                           {columnas[i].titulo}
                           <span className="text-tinta/50">
                             {' '}
@@ -324,7 +323,7 @@ export default function NotasPanel({ grupo }) {
                       </li>
                     ))}
                     {f.asistencia && (
-                      <li className="flex items-baseline justify-between gap-3 text-sm">
+                      <li className="flex items-baseline justify-between gap-3 text-[15px]">
                         <span className="text-tinta/75">
                           Asistencia
                           <span className="text-tinta/50"> · {f.asistencia.valor}%</span>
@@ -342,7 +341,7 @@ export default function NotasPanel({ grupo }) {
             ))}
           </ul>
 
-          <p className="text-sm text-tinta/65">
+          <p className="text-[15px] text-tinta/70">
             Cada celda es la <b>calificación</b> de esa actividad en porcentaje del
             periodo (si vale 15% y sacó el 80%, la celda dice 12,00%). La columna{' '}
             <b>Nota</b> es la <b>suma</b> de la fila.
@@ -369,7 +368,7 @@ function Celda({ fila }) {
   if (fila.noCuenta) {
     return (
       <span
-        className="rounded-full bg-tinta/10 px-2 py-0.5 text-[11px] font-medium text-tinta/60 ring-1 ring-inset ring-tinta/20"
+        className="rounded-full bg-tinta/10 px-2 py-0.5 text-[13px] font-medium text-tinta/65 ring-1 ring-inset ring-tinta/20"
         title={
           fila.noCuenta === 'rubro'
             ? 'Su rubro ya no existe: no cuenta'
@@ -383,7 +382,7 @@ function Celda({ fila }) {
   if (fila.calificacion != null) return <>{pct(fila.calificacion)}</>
   if (fila.entrega)
     return (
-      <span className="rounded-full bg-tinta/10 px-2 py-0.5 text-[11px] font-medium text-tinta/60 ring-1 ring-inset ring-tinta/20">
+      <span className="rounded-full bg-tinta/10 px-2 py-0.5 text-[13px] font-medium text-tinta/65 ring-1 ring-inset ring-tinta/20">
         Sin revisar
       </span>
     )

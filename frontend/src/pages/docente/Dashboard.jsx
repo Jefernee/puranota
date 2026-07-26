@@ -130,7 +130,7 @@ export default function DashboardDocente() {
                 <div className="flex items-start justify-between gap-2">
                   <h2 className="text-lg font-bold leading-tight">{g.nombre}</h2>
                   {!g.activo && (
-                    <span className="shrink-0 rounded-full bg-tinta/10 px-2 py-0.5 text-xs text-tinta/60">
+                    <span className="shrink-0 rounded-full bg-tinta/10 px-2 py-0.5 text-sm text-tinta/60">
                       Inactivo
                     </span>
                   )}
@@ -140,12 +140,12 @@ export default function DashboardDocente() {
                     'Sin materia'}
                 </p>
                 {porRevisar[g.id] > 0 && (
-                  <span className="mt-2 inline-block rounded-full bg-margen/10 px-2.5 py-0.5 text-xs font-semibold text-margen">
+                  <span className="mt-2 inline-block rounded-full bg-margen/10 px-2.5 py-0.5 text-sm font-semibold text-margen">
                     {porRevisar[g.id]} por revisar
                   </span>
                 )}
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="text-xs text-tinta/60">
+                  <span className="text-sm text-tinta/60">
                     {g.anio} · {cantidadPeriodos(g)} periodos
                   </span>
                   <span className="rounded bg-tinta/5 px-2 py-1 font-mono text-sm font-bold tracking-widest text-tinta">

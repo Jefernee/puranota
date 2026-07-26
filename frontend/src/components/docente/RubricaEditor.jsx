@@ -21,7 +21,7 @@ export default function RubricaEditor({ value = [], onChange, puntosTotales }) {
   return (
     <div className="space-y-3">
       {criterios.length === 0 && (
-        <p className="text-xs text-tinta/60">
+        <p className="text-sm text-tinta/60">
           Opcional. Agregá criterios para guiar la calificación (ej. “Portada
           completa”, “Resuelve los ejercicios”).
         </p>
@@ -76,7 +76,7 @@ export default function RubricaEditor({ value = [], onChange, puntosTotales }) {
 
       {criterios.length > 0 && (
         <div
-          className={`flex items-center justify-between rounded-cuaderno border px-3 py-2 text-xs ${
+          className={`flex items-center justify-between rounded-cuaderno border px-3 py-2 text-sm ${
             coincide
               ? 'border-pizarra/30 bg-pizarra/10 text-pizarra'
               : 'border-tinta/15 bg-tinta/5 text-tinta/60'

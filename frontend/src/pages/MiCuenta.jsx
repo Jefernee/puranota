@@ -156,7 +156,7 @@ function DatosPersonales({ perfil }) {
           value={correo}
           onChange={(e) => setCorreo(e.target.value)}
         />
-        <p className="mt-1 text-xs text-tinta/60">
+        <p className="mt-1 text-sm text-tinta/65">
           Es también tu usuario para iniciar sesión.
         </p>
       </div>
@@ -274,7 +274,7 @@ function PreguntaSeguridad({ perfil }) {
       <p className="font-display text-base font-semibold text-tinta">
         Pregunta de seguridad
       </p>
-      <p className="text-xs text-tinta/65">
+      <p className="text-sm text-tinta/70">
         Sirve para recuperar tu contraseña sin correo. Por seguridad no mostramos
         tu respuesta anterior; si la cambiás, escribí una nueva.
       </p>

@@ -129,7 +129,7 @@ export default function Onboarding() {
         </div>
 
         <div className="rounded-cuaderno border border-tinta/10 bg-tinta/[0.03] p-3">
-          <p className="mb-2 text-xs text-tinta/60">
+          <p className="mb-2 text-sm text-tinta/65">
             Pregunta de seguridad — te sirve para recuperar tu contraseña si la
             olvidás (no usamos correo). Elegí algo que solo vos sepás.
           </p>
@@ -162,7 +162,7 @@ export default function Onboarding() {
               value={respuesta}
               onChange={(e) => setRespuesta(e.target.value)}
             />
-            <p className="mt-1 text-xs text-tinta/60">
+            <p className="mt-1 text-sm text-tinta/65">
               No importan mayúsculas ni espacios al inicio/fin. Acordate bien de
               cómo la escribís.
             </p>

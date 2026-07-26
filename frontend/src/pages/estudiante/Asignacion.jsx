@@ -8,7 +8,13 @@ import Cargando from '../../components/Cargando'
 import GaleriaArchivos from '../../components/GaleriaArchivos'
 import { etiquetaPeriodo } from '../../lib/periodos'
 import { formatearFecha, textoVencimiento } from '../../lib/formato'
-import { calcularEstado, puedeEntregar, TONO_BADGE } from '../../lib/entregas'
+import {
+  calcularEstado,
+  puedeEntregar,
+  tipoDe,
+  TONO_BADGE,
+} from '../../lib/entregas'
+import { calificacionDe, pct } from '../../lib/notas'
 import { obtenerAsignacion } from '../../services/asignaciones.service'
 import {
   obtenerEntrega,
@@ -17,6 +23,16 @@ import {
   eliminarArchivo,
 } from '../../services/entregas.service'
 import { subirArchivos, ACCEPT } from '../../services/storage.service'
+
+// Detalle de una actividad para el estudiante.
+//
+// Estructura de registro académico formal (referencia: Aula Virtual de la
+// UISIL, capturas en imagenes/): primero el veredicto —la Revisión con la nota
+// en porcentaje—, después la entrega, y al final los datos de la actividad en
+// una tabla de etiqueta y valor.
+//
+// Sin pastillas de colores con emoji: ocupaban media pantalla en celular y no
+// son lenguaje de registro.
 
 export default function AsignacionEstudiante() {
   const { id } = useParams()
@@ -121,10 +137,10 @@ export default function AsignacionEstudiante() {
     )
 
   const est = calcularEstado(asignacion, entrega)
+  const tipo = tipoDe(asignacion)
   const editable = puedeEntregar(asignacion, entrega)
   const calificada = entrega?.estado === 'calificada'
   const archivos = entrega?.archivos || []
-
   const esPrueba = asignacion.requiere_entrega === false
   const sinInfo =
     !asignacion.instrucciones &&
@@ -133,153 +149,134 @@ export default function AsignacionEstudiante() {
 
   return (
     <Layout ancho="normal">
+      {/* Encabezado */}
       <div className="mb-5 border-b border-tinta/10 pb-4">
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <div className="flex min-w-0 items-center gap-3">
-            <Volver to={`/estudiante/grupos/${asignacion.grupo_id}`}>
-              Volver al grupo
-            </Volver>
-            <h1 className="min-w-0 truncate text-xl font-bold leading-tight sm:text-2xl">
-              {asignacion.titulo}
-            </h1>
-          </div>
+        <Volver to={`/estudiante/grupos/${asignacion.grupo_id}`}>
+          Volver al grupo
+        </Volver>
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <h1 className="min-w-0 break-words text-xl font-bold leading-tight text-tinta sm:text-2xl">
+            {asignacion.titulo}
+          </h1>
           <span
-            className={`shrink-0 rounded-full px-3 py-1 text-sm font-medium ${TONO_BADGE[est.tono]}`}
+            className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-sm font-medium ${TONO_BADGE[est.tono]}`}
           >
             {est.etiqueta}
           </span>
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Chip color="guaria" icon="🗓️">
-            {etiquetaPeriodo(asignacion.periodo)}
-          </Chip>
-          <Chip color="pizarra" icon="🏷️">
-            {asignacion.rubro}
-            {asignacion.porcentaje != null ? ` · ${asignacion.porcentaje}%` : ''}
-          </Chip>
-          <Chip icon="🎯">sobre {asignacion.puntos} pts</Chip>
-          {asignacion.fecha_limite && (
-            <Chip
-              color={est.clave.startsWith('pendiente') ? 'alerta' : 'neutral'}
-              icon="📅"
-            >
-              {formatearFecha(asignacion.fecha_limite, false)} ·{' '}
-              {textoVencimiento(asignacion.fecha_limite)}
-            </Chip>
-          )}
-          {asignacion.permite_tardias && asignacion.penalizacion_tardia > 0 && (
-            <Chip
-              color="alerta"
-              icon="⏰"
-              title={`Si entregás después de la fecha límite, tu nota de esta entrega baja ${asignacion.penalizacion_tardia}%.`}
-            >
-              −{asignacion.penalizacion_tardia}% si entregás tarde
-            </Chip>
-          )}
-          {!asignacion.permite_tardias && <Chip color="alerta">Sin tardías</Chip>}
-        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Columna izquierda: información de la actividad */}
-        <div className="space-y-4 lg:col-span-2">
+      <div className="grid gap-5 lg:grid-cols-3 lg:items-start">
+        {/* ── Columna izquierda: la actividad ──────────────────────────────
+            En celular va DESPUÉS de la nota y la entrega: lo primero que un
+            estudiante busca es su nota, no las instrucciones que ya leyó. */}
+        <div className="order-2 space-y-5 lg:order-1 lg:col-span-2">
+          <Panel titulo="Datos generales">
+            <dl className="divide-y divide-tinta/10 text-[15px]">
+              <Dato etiqueta="Tipo de actividad" valor={tipo.label} />
+              <Dato etiqueta="Periodo" valor={etiquetaPeriodo(asignacion.periodo)} />
+              <Dato etiqueta="Rubro" valor={asignacion.rubro} />
+              <Dato
+                etiqueta="Valor porcentual"
+                valor={
+                  asignacion.porcentaje != null ? `${asignacion.porcentaje}%` : '—'
+                }
+              />
+              <Dato etiqueta="Puntaje" valor={`${asignacion.puntos} pts`} />
+              {asignacion.clase?.titulo && (
+                <Dato
+                  etiqueta="Clase a la que pertenece"
+                  valor={asignacion.clase.titulo}
+                />
+              )}
+              <Dato
+                etiqueta="Fecha de entrega"
+                valor={
+                  asignacion.fecha_limite
+                    ? `${formatearFecha(asignacion.fecha_limite, false)} · ${textoVencimiento(
+                        asignacion.fecha_limite,
+                      )}`
+                    : 'Sin fecha límite'
+                }
+              />
+              {!esPrueba && (
+                <Dato
+                  etiqueta="Entregas tardías"
+                  valor={
+                    !asignacion.permite_tardias
+                      ? 'No se admiten'
+                      : asignacion.penalizacion_tardia > 0
+                        ? `Se admiten, con ${asignacion.penalizacion_tardia}% de rebaja`
+                        : 'Se admiten, sin rebaja'
+                  }
+                />
+              )}
+            </dl>
+          </Panel>
+
           {asignacion.instrucciones && (
-            <div className="tarjeta-cuaderno px-5 py-4 pl-7">
-              <p className="mb-2 flex items-center gap-2 font-display text-base font-semibold text-tinta">
-                <span aria-hidden="true">📋</span> Instrucciones
-              </p>
+            <Panel titulo="Instrucciones">
               <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-tinta/85">
                 {asignacion.instrucciones}
               </p>
-            </div>
+            </Panel>
           )}
 
           {asignacion.archivos?.length > 0 && (
-            <div className="tarjeta-cuaderno px-5 py-4 pl-7">
-              <p className="mb-3 flex items-center gap-2 font-display text-base font-semibold text-tinta">
-                <span aria-hidden="true">📎</span> Material de la actividad
-              </p>
+            <Panel titulo="Material de la actividad">
               <GaleriaArchivos archivos={asignacion.archivos} />
-            </div>
+            </Panel>
           )}
 
           {asignacion.rubrica?.length > 0 && (
-            <div className="tarjeta-cuaderno px-5 py-4 pl-7">
-              <p className="mb-3 flex items-center gap-2 font-display text-base font-semibold text-tinta">
-                <span aria-hidden="true">✅</span> Con qué te van a calificar
-              </p>
-              <ul className="space-y-1.5 text-[15px]">
+            <Panel titulo="Rúbrica de evaluación">
+              <dl className="divide-y divide-tinta/10 text-[15px]">
                 {asignacion.rubrica.map((c, i) => (
-                  <li
-                    key={i}
-                    className="flex justify-between gap-3 border-b border-tinta/5 pb-1.5 last:border-0"
-                  >
-                    <span className="text-tinta/80">{c.criterio}</span>
-                    <span className="shrink-0 font-medium text-tinta/60">
-                      {c.puntos} pts
-                    </span>
-                  </li>
+                  <Dato key={i} etiqueta={c.criterio} valor={`${c.puntos} pts`} />
                 ))}
-              </ul>
-            </div>
+              </dl>
+            </Panel>
           )}
 
           {sinInfo && (
-            <div className="tarjeta-cuaderno px-5 py-4 pl-7">
-              <p className="text-sm text-tinta/65">Sin instrucciones adicionales.</p>
-            </div>
+            <Panel titulo="Instrucciones">
+              <p className="text-[15px] text-tinta/70">
+                Sin instrucciones adicionales.
+              </p>
+            </Panel>
           )}
         </div>
 
-        {/* Columna derecha: tu entrega / nota */}
-        <div className="space-y-4">
-          {/* Nota cuando ya está calificada */}
-          {calificada && (
-            <div className="rounded-cuaderno border border-guaria/30 bg-guaria/10 px-5 py-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-tinta/60">
-                Tu nota
-              </p>
-              <p className="font-display text-4xl font-bold text-guaria">
-                {entrega.nota ?? '—'}
-                <span className="text-xl text-tinta/60"> / {asignacion.puntos}</span>
-              </p>
-              {entrega.observaciones && (
-                <div className="mt-3 border-t border-guaria/20 pt-3">
-                  <p className="mb-1 font-display text-sm font-semibold text-tinta">
-                    Observaciones
-                  </p>
-                  <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-tinta/85">
-                    {entrega.observaciones}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+        {/* ── Columna derecha: revisión y entrega. Primera en celular. ────── */}
+        <div className="order-1 space-y-5 lg:order-2">
+          {calificada && <Revision asignacion={asignacion} entrega={entrega} />}
 
-          {/* Prueba escrita / nota directa */}
           {esPrueba && (
-            <div className="tarjeta-cuaderno px-5 py-4 pl-7">
-              <p className="text-sm text-tinta/70">
-                Esta actividad se califica en clase — no tenés que entregar nada.
-                Tu profe te pone la nota.
+            <Panel titulo="Esta actividad no se entrega">
+              <p className="text-[15px] text-tinta/75">
+                Se califica en clase. Tu profe te pone la nota directamente.
               </p>
-            </div>
+            </Panel>
           )}
 
-          {/* Mi entrega: archivos ya subidos */}
           {!esPrueba && (
-            <div className="tarjeta-cuaderno px-5 py-4 pl-7">
-              <p className="mb-2 flex items-center gap-2 font-display text-base font-semibold text-tinta">
-                <span aria-hidden="true">📤</span> Mi entrega
-              </p>
+            <Panel titulo="Mi entrega">
+              {entrega?.entregado_en && (
+                <p className="mb-3 text-sm text-tinta/65">
+                  Se registró tu entrega el{' '}
+                  <b className="text-tinta/80">
+                    {formatearFecha(entrega.entregado_en)}
+                  </b>
+                </p>
+              )}
 
               {archivos.length === 0 && seleccion.length === 0 && (
-                <p className="text-sm text-tinta/65">
+                <p className="text-[15px] text-tinta/70">
                   {editable
-                    ? 'Todavía no subiste nada. Agregá tus fotos o PDF abajo.'
+                    ? 'Todavía no subiste nada.'
                     : entrega
                       ? 'No hay archivos para mostrar en tu entrega.'
-                      : 'No entregaste nada en esta asignación.'}
+                      : 'No entregaste nada en esta actividad.'}
                 </p>
               )}
 
@@ -293,7 +290,7 @@ export default function AsignacionEstudiante() {
                           type="button"
                           onClick={() => handleQuitarArchivo(a.id)}
                           disabled={quitandoId === a.id}
-                          className="absolute right-1 top-1 rounded-full bg-papel/90 px-2 py-0.5 text-sm text-margen shadow hover:bg-papel disabled:opacity-50"
+                          className="absolute right-1.5 top-1.5 grid h-8 w-8 place-items-center rounded-full bg-papel/95 text-base font-semibold text-margen shadow-md hover:bg-papel disabled:opacity-50"
                           title="Quitar"
                           aria-label="Quitar archivo"
                         >
@@ -304,23 +301,22 @@ export default function AsignacionEstudiante() {
                   ))}
                 </ul>
               )}
-            </div>
+            </Panel>
           )}
 
-          {/* Zona de subida / reemplazo */}
           {editable && !calificada && (
-            <div className="tarjeta-cuaderno px-5 py-4 pl-7">
-              <p className="mb-1 flex items-center gap-2 font-display text-base font-semibold text-tinta">
-                <span aria-hidden="true">⬆️</span>{' '}
-                {archivos.length > 0 ? 'Agregar más archivos' : 'Subir mi entrega'}
-              </p>
-              <p className="mb-3 text-xs text-tinta/60">
+            <Panel
+              titulo={
+                archivos.length > 0 ? 'Agregar más archivos' : 'Subir mi entrega'
+              }
+            >
+              <p className="mb-3 text-sm text-tinta/65">
                 Fotos (JPG, PNG, WEBP) o PDF, hasta 10 MB cada uno. Las fotos se
                 comprimen solas. Podés reemplazar mientras no se pase la fecha.
               </p>
 
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-cuaderno border border-dashed border-tinta/30 px-4 py-3 text-sm text-tinta/70 hover:border-pizarra hover:text-pizarra">
-                <span>+ Elegir archivos</span>
+              <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-cuaderno border border-dashed border-tinta/30 px-4 py-4 text-[15px] font-medium text-tinta/75 transition-colors hover:border-pizarra hover:text-pizarra active:bg-pizarra/[0.06] sm:py-3">
+                <span>Elegir archivos</span>
                 <input
                   type="file"
                   multiple
@@ -341,7 +337,7 @@ export default function AsignacionEstudiante() {
                       <button
                         type="button"
                         onClick={() => quitarSeleccion(i)}
-                        className="absolute right-1 top-1 rounded-full bg-papel/90 px-2 py-0.5 text-sm text-margen shadow hover:bg-papel"
+                        className="absolute right-1.5 top-1.5 grid h-8 w-8 place-items-center rounded-full bg-papel/95 text-base font-semibold text-margen shadow-md hover:bg-papel"
                         aria-label="Quitar de la selección"
                       >
                         ✕
@@ -359,7 +355,7 @@ export default function AsignacionEstudiante() {
 
               <div className="mt-3 flex justify-end">
                 <button
-                  className="btn-primario"
+                  className="btn-primario w-full justify-center sm:w-auto"
                   onClick={handleEntregar}
                   disabled={subiendo || seleccion.length === 0}
                 >
@@ -370,14 +366,13 @@ export default function AsignacionEstudiante() {
                       : 'Entregar'}
                 </button>
               </div>
-            </div>
+            </Panel>
           )}
 
-          {/* Mensaje cuando no se puede entregar (solo si requiere entrega) */}
           {!esPrueba && !editable && !calificada && (
             <Alerta tipo="info">
               {est.clave === 'cerrada'
-                ? 'Esta asignación ya cerró y no admite entregas tardías.'
+                ? 'Esta actividad ya cerró y no admite entregas tardías.'
                 : 'Ya no podés modificar esta entrega.'}
             </Alerta>
           )}
@@ -391,30 +386,86 @@ export default function AsignacionEstudiante() {
   )
 }
 
-// Pastilla de metadato (con color e ícono) para el encabezado de la asignación.
-function Chip({ children, icon, color = 'neutral', title }) {
-  // Sobrio y uniforme: todas las pastillas con superficie propia (resaltan del
-  // fondo) y borde, sin colores. El texto y el badge de estado comunican la
-  // urgencia; los chips solo dan el dato.
-  const base = 'bg-superficie text-tinta/80 border-tinta/15 shadow-sm'
-  const estilos = {
-    neutral: base,
-    pizarra: base,
-    guaria: base,
-    alerta: base,
-  }
+// ─── Piezas ───────────────────────────────────────────────────────────────────
+
+// Panel con encabezado sobrio. Sin íconos: el título dice qué es.
+function Panel({ titulo, children }) {
   return (
-    <span
-      title={title}
-      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium ${estilos[color]}`}
-    >
-      {icon && <span aria-hidden="true">{icon}</span>}
+    <section className="tarjeta-cuaderno px-4 py-4 sm:px-5">
+      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-tinta/65">
+        {titulo}
+      </h2>
       {children}
-    </span>
+    </section>
   )
 }
 
-// Vista de un archivo ya subido: miniatura si es imagen, chip si es PDF.
+// Fila de etiqueta y valor, como el bloque "Datos generales" de un registro.
+// Ocupa muchísimo menos que una pastilla por dato, y se lee mejor.
+function Dato({ etiqueta, valor }) {
+  if (valor == null || valor === '') return null
+  return (
+    <div className="flex items-baseline justify-between gap-4 py-2">
+      <dt className="shrink-0 text-tinta/65">{etiqueta}</dt>
+      <dd className="min-w-0 break-words text-right font-medium text-tinta">
+        {valor}
+      </dd>
+    </div>
+  )
+}
+
+// Bloque de Revisión: el veredicto. La nota se expresa en PORCENTAJE —que es la
+// unidad del registro— y debajo, los puntos obtenidos.
+function Revision({ asignacion, entrega }) {
+  const obtenido = calificacionDe(asignacion, entrega)
+  const vale = asignacion.porcentaje
+
+  return (
+    <section className="overflow-hidden rounded-cuaderno border border-pizarra/30 shadow-sm">
+      <header className="bg-pizarra px-4 py-2">
+        <h2 className="text-[13px] font-semibold uppercase tracking-wide text-papel">
+          Revisión
+        </h2>
+      </header>
+
+      <div className="bg-superficie px-5 py-4">
+        <p className="text-sm text-tinta/65">Obtuviste</p>
+        <p className="mt-0.5 text-3xl font-bold leading-none tabular-nums text-tinta">
+          {obtenido == null ? '—' : pct(obtenido)}
+          {vale != null && (
+            <span className="text-xl font-semibold text-tinta/55"> / {vale}%</span>
+          )}
+        </p>
+        <p className="mt-2 text-[15px] text-tinta/70">
+          <b className="font-semibold text-tinta">{entrega.nota ?? '—'}</b> de{' '}
+          {asignacion.puntos} puntos
+        </p>
+        {entrega.calificado_en && (
+          <p className="mt-1 text-sm text-tinta/60">
+            Fecha de revisión: {formatearFecha(entrega.calificado_en)}
+          </p>
+        )}
+
+        {entrega.observaciones ? (
+          <div className="mt-4 border-t border-tinta/10 pt-3">
+            <h3 className="text-[13px] font-semibold uppercase tracking-wide text-tinta/65">
+              Retroalimentación del docente
+            </h3>
+            <p className="mt-1.5 whitespace-pre-wrap text-[15px] leading-relaxed text-tinta/85">
+              {entrega.observaciones}
+            </p>
+          </div>
+        ) : (
+          <p className="mt-4 border-t border-tinta/10 pt-3 text-sm italic text-tinta/55">
+            No se registró retroalimentación.
+          </p>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// Vista de un archivo ya subido: miniatura si es imagen, ficha si es documento.
 function VisorArchivo({ url, nombre, tipo }) {
   const esImagen = tipo?.startsWith('image/')
   const ext = nombre?.includes('.')
@@ -425,7 +476,7 @@ function VisorArchivo({ url, nombre, tipo }) {
       href={url}
       target="_blank"
       rel="noreferrer"
-      className="group block overflow-hidden rounded-cuaderno border border-tinta/10 bg-superficie shadow-sm transition-all hover:border-pizarra/40 hover:shadow-md"
+      className="group block overflow-hidden rounded-cuaderno border border-tinta/12 bg-superficie shadow-sm transition-all hover:border-pizarra/40 hover:shadow-md"
       title={`Abrir ${nombre}`}
     >
       {esImagen ? (
@@ -435,21 +486,20 @@ function VisorArchivo({ url, nombre, tipo }) {
           className="h-28 w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]"
         />
       ) : (
-        <div className="flex h-28 flex-col items-center justify-center gap-2 bg-gradient-to-b from-pizarra/[0.07] to-pizarra/[0.02] px-2">
-          <div className="flex h-14 w-11 flex-col overflow-hidden rounded-md border border-pizarra/25 bg-superficie shadow-sm transition-transform duration-200 group-hover:scale-105">
-            <div className="h-2 w-full bg-pizarra" />
-            <div className="flex flex-1 items-center justify-center px-1">
-              <span className="text-[10px] font-extrabold text-pizarra">{ext}</span>
-            </div>
-          </div>
-          <span className="line-clamp-2 px-1 text-center text-xs leading-tight text-tinta/70">{nombre}</span>
+        <div className="flex h-28 min-w-0 flex-col items-center justify-center gap-2 overflow-hidden bg-pizarra/[0.05] px-2">
+          <span className="grid h-11 w-9 shrink-0 place-items-center rounded-md border border-pizarra/25 bg-superficie text-xs font-extrabold text-pizarra shadow-sm transition-transform group-hover:scale-105">
+            {ext}
+          </span>
+          <span className="line-clamp-2 w-full break-all px-1 text-center text-sm leading-tight text-tinta/75">
+            {nombre}
+          </span>
         </div>
       )}
     </a>
   )
 }
 
-// Preview local de un archivo elegido pero aún no subido.
+// Vista previa de un archivo elegido pero aún no subido.
 function PreviewLocal({ file }) {
   const [url, setUrl] = useState('')
   const esImagen = file.type?.startsWith('image/')
@@ -464,18 +514,17 @@ function PreviewLocal({ file }) {
     ? file.name.split('.').pop().toUpperCase().slice(0, 4)
     : 'DOC'
   return (
-    <div className="overflow-hidden rounded-cuaderno border border-tinta/10 bg-superficie shadow-sm">
+    <div className="overflow-hidden rounded-cuaderno border border-tinta/12 bg-superficie shadow-sm">
       {esImagen && url ? (
         <img src={url} alt={file.name} className="h-28 w-full object-cover" />
       ) : (
-        <div className="flex h-28 flex-col items-center justify-center gap-2 bg-gradient-to-b from-pizarra/[0.07] to-pizarra/[0.02] px-2">
-          <div className="flex h-14 w-11 flex-col overflow-hidden rounded-md border border-pizarra/25 bg-superficie shadow-sm">
-            <div className="h-2 w-full bg-pizarra" />
-            <div className="flex flex-1 items-center justify-center px-1">
-              <span className="text-[10px] font-extrabold text-pizarra">{ext}</span>
-            </div>
-          </div>
-          <span className="line-clamp-2 px-1 text-center text-xs leading-tight text-tinta/70">{file.name}</span>
+        <div className="flex h-28 min-w-0 flex-col items-center justify-center gap-2 overflow-hidden bg-pizarra/[0.05] px-2">
+          <span className="grid h-11 w-9 shrink-0 place-items-center rounded-md border border-pizarra/25 bg-superficie text-xs font-extrabold text-pizarra shadow-sm">
+            {ext}
+          </span>
+          <span className="line-clamp-2 w-full break-all px-1 text-center text-sm leading-tight text-tinta/75">
+            {file.name}
+          </span>
         </div>
       )}
     </div>

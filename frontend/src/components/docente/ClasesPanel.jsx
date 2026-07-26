@@ -206,7 +206,7 @@ export default function ClasesPanel({ grupoId }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-bold text-tinta">{c.titulo}</h3>
                     {!c.visible && (
-                      <span className="rounded-full bg-tinta/10 px-2 py-0.5 text-xs text-tinta/60">
+                      <span className="rounded-full bg-tinta/10 px-2 py-0.5 text-sm text-tinta/60">
                         Oculta
                       </span>
                     )}

@@ -17,13 +17,13 @@ export function calcularEstado(asignacion, entrega) {
   // aplica "entregada"/"tardía"; solo importa si ya tiene nota.
   if (asignacion?.requiere_entrega === false) {
     if (entrega?.estado === 'calificada')
-      return { clave: 'calificada', etiqueta: 'Calificada', tono: 'guaria' }
+      return { clave: 'calificada', etiqueta: 'Calificada', tono: 'pizarra' }
     return { clave: 'sin_nota', etiqueta: 'Pendiente de nota', tono: 'tinta' }
   }
 
   if (entrega) {
     if (entrega.estado === 'calificada')
-      return { clave: 'calificada', etiqueta: 'Calificada', tono: 'guaria' }
+      return { clave: 'calificada', etiqueta: 'Calificada', tono: 'pizarra' }
     if (entrega.tardia)
       return { clave: 'tardia', etiqueta: 'Entregada tarde', tono: 'margen' }
     return { clave: 'entregada', etiqueta: 'Entregada', tono: 'pizarra' }
@@ -58,30 +58,15 @@ export function puedeEntregar(asignacion, entrega) {
  * Tipos de actividad. El ícono es discreto a propósito: identifica de un vistazo
  * sin competir con el texto (ver docs/PLAN.md §3.3).
  */
-// `clase` va con las clases de Tailwind COMPLETAS: Tailwind no puede generar
-// nombres armados en tiempo de ejecución (`bg-${tono}` nunca existiría en el CSS).
+// Solo el nombre legible. El aspecto (ícono y color) vive en
+// components/IconoTipo.jsx, para que un glifo suelto no se desalinee.
 export const TIPOS = {
-  entrega: {
-    label: 'Entrega',
-    icono: '▣',
-    clase: 'bg-pizarra/12 text-pizarra',
-  },
-  prueba: {
-    label: 'Prueba',
-    icono: '◆',
-    clase: 'bg-guaria/12 text-guaria',
-  },
-  proyecto: {
-    label: 'Proyecto',
-    icono: '≡',
-    clase: 'bg-margen/12 text-margen',
-  },
-  foro: {
-    label: 'Foro',
-    icono: '❝',
-    clase: 'bg-tinta/10 text-tinta/70',
-  },
+  entrega: { label: 'Entrega' },
+  prueba: { label: 'Prueba' },
+  proyecto: { label: 'Proyecto' },
+  foro: { label: 'Foro' },
 }
+
 
 /**
  * Tipo de una asignación. Las filas viejas (anteriores a la columna `tipo`) se

@@ -24,12 +24,12 @@ import {
 function estadoDocente(entrega, requiereEntrega = true) {
   if (!requiereEntrega) {
     if (entrega?.estado === 'calificada')
-      return { clave: 'calificada', etiqueta: 'Calificada', tono: 'guaria' }
+      return { clave: 'calificada', etiqueta: 'Calificada', tono: 'pizarra' }
     return { clave: 'sin_entregar', etiqueta: 'Sin calificar', tono: 'tinta' }
   }
   if (!entrega) return { clave: 'sin_entregar', etiqueta: 'Sin entregar', tono: 'tinta' }
   if (entrega.estado === 'calificada')
-    return { clave: 'calificada', etiqueta: 'Calificada', tono: 'guaria' }
+    return { clave: 'calificada', etiqueta: 'Calificada', tono: 'pizarra' }
   if (entrega.tardia)
     return { clave: 'tardia', etiqueta: 'Entregada tarde', tono: 'margen' }
   return { clave: 'entregada', etiqueta: 'Entregada', tono: 'pizarra' }
@@ -136,7 +136,7 @@ export default function RevisionAsignacion({ asignacionId, onVolver }) {
               Volver al grupo
             </Volver>
           )}
-          <h1 className="min-w-0 truncate text-xl font-bold leading-tight sm:text-2xl">
+          <h1 className="min-w-0 break-words text-xl font-bold leading-tight sm:text-2xl">
             {asignacion.titulo}
           </h1>
         </div>
@@ -184,7 +184,7 @@ export default function RevisionAsignacion({ asignacionId, onVolver }) {
             return (
               <li
                 key={f.estudiante.id}
-                className="tarjeta-cuaderno flex items-center justify-between gap-3 px-4 py-3 pl-6"
+                className="tarjeta-cuaderno flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:pl-6"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-pizarra/10 text-sm font-bold text-pizarra">
@@ -203,15 +203,15 @@ export default function RevisionAsignacion({ asignacionId, onVolver }) {
                     </p>
                   </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2 sm:shrink-0">
                   <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${TONO_BADGE[est.tono]}`}
+                    className={`whitespace-nowrap rounded-full px-2.5 py-1 text-sm font-medium ${TONO_BADGE[est.tono]}`}
                   >
                     {est.etiqueta}
                   </span>
                   {puedeCalificar && (
                     <button
-                      className={`px-3 py-1.5 text-sm ${
+                      className={`min-h-[40px] whitespace-nowrap px-4 text-sm ${
                         f.entrega?.estado === 'calificada'
                           ? 'btn-secundario'
                           : 'btn-primario'
@@ -293,7 +293,7 @@ function PanelCalificar({ asignacion, fila, onCalificada }) {
             </p>
           )}
           {entrega?.tardia && (
-            <p className="mt-2 text-xs text-margen">Esta entrega fue tardía.</p>
+            <p className="mt-2 text-sm text-margen">Esta entrega fue tardía.</p>
           )}
         </div>
       ) : (

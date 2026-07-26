@@ -70,7 +70,7 @@ export default function Login() {
             </label>
             <Link
               to="/olvide"
-              className="mb-1 text-xs font-medium text-pizarra hover:underline"
+              className="mb-1 text-sm font-medium text-pizarra hover:underline"
             >
               ¿La olvidaste?
             </Link>

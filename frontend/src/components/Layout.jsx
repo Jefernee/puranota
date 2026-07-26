@@ -106,7 +106,7 @@ export default function Layout({ children, ancho = 'normal' }) {
                     {nombreCorto}
                   </span>
                   <span
-                    className={`block text-xs font-medium ${
+                    className={`block text-sm font-medium ${
                       esDocente ? 'text-guaria' : 'text-pizarra'
                     }`}
                   >

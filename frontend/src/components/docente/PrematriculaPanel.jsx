@@ -77,7 +77,7 @@ export default function PrematriculaPanel({ grupoId }) {
         <label htmlFor="prem" className="etiqueta">
           Pegá la lista de correos
         </label>
-        <p className="mb-2 text-xs text-tinta/60">
+        <p className="mb-2 text-sm text-tinta/60">
           Separados por coma, espacio o salto de línea. Cuando cada estudiante se
           registre con ese correo, entra al grupo automáticamente.
         </p>
@@ -91,7 +91,7 @@ export default function PrematriculaPanel({ grupoId }) {
         />
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-          <span className="text-xs text-tinta/60">
+          <span className="text-sm text-tinta/60">
             {previa.validos.length} válido
             {previa.validos.length === 1 ? '' : 's'}
             {previa.invalidos.length > 0 &&
@@ -128,11 +128,11 @@ export default function PrematriculaPanel({ grupoId }) {
               <span className="truncate text-sm text-tinta">{p.correo}</span>
               <div className="flex items-center gap-2">
                 {p.usado ? (
-                  <span className="rounded-full bg-pizarra/10 px-2 py-0.5 text-xs font-medium text-pizarra">
+                  <span className="rounded-full bg-pizarra/10 px-2 py-0.5 text-sm font-medium text-pizarra">
                     Ya se unió
                   </span>
                 ) : (
-                  <span className="rounded-full bg-tinta/10 px-2 py-0.5 text-xs text-tinta/60">
+                  <span className="rounded-full bg-tinta/10 px-2 py-0.5 text-sm text-tinta/60">
                     Esperando
                   </span>
                 )}

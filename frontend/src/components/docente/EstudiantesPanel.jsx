@@ -108,7 +108,7 @@ export default function EstudiantesPanel({ grupoId }) {
         <p className="text-sm text-tinta/70">
           {estudiantes.length} matriculado{estudiantes.length === 1 ? '' : 's'}
           {pendientes > 0 && (
-            <span className="ml-2 rounded-full bg-guaria/10 px-2 py-0.5 text-xs font-medium text-guaria">
+            <span className="ml-2 rounded-full bg-guaria/10 px-2 py-0.5 text-sm font-medium text-guaria">
               {pendientes} pendiente{pendientes === 1 ? '' : 's'}
             </span>
           )}
@@ -143,11 +143,11 @@ export default function EstudiantesPanel({ grupoId }) {
 
               <div className="flex w-full flex-wrap items-center gap-1.5 sm:w-auto">
                 {e.estado === 'pendiente' ? (
-                  <span className="rounded-full bg-guaria/10 px-2.5 py-0.5 text-xs font-medium text-guaria">
+                  <span className="rounded-full bg-guaria/10 px-2.5 py-0.5 text-sm font-medium text-guaria">
                     Pendiente
                   </span>
                 ) : (
-                  <span className="rounded-full bg-pizarra/10 px-2.5 py-0.5 text-xs font-medium text-pizarra">
+                  <span className="rounded-full bg-pizarra/10 px-2.5 py-0.5 text-sm font-medium text-pizarra">
                     Activo
                   </span>
                 )}
@@ -271,7 +271,7 @@ export default function EstudiantesPanel({ grupoId }) {
                 {copiado ? 'Copiado ✓' : 'Copiar'}
               </button>
             </div>
-            <p className="text-xs text-tinta/65">
+            <p className="text-sm text-tinta/65">
               Al ingresar con esta clave, el estudiante será llevado
               obligatoriamente a crear una nueva.
             </p>

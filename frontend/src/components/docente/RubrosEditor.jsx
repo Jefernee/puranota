@@ -372,7 +372,7 @@ export default function RubrosEditor({ grupo, onGuardar }) {
         {/* --- Columna de edición --- */}
         <div className="space-y-4">
           {/* Encabezados de columna */}
-          <div className="flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wide text-tinta/55">
+          <div className="flex items-center gap-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-tinta/55">
             <span className="min-w-0 flex-1">Rubro</span>
             <span className="w-20 shrink-0 text-right sm:w-28">
               <span className="sm:hidden">Peso</span>
@@ -423,7 +423,7 @@ export default function RubrosEditor({ grupo, onGuardar }) {
               <div className="flex items-center gap-2">
                 <div className="campo flex min-w-0 flex-1 items-center gap-2 bg-tinta/[0.04] text-base text-tinta">
                   <span className="shrink-0 font-medium">Asistencia</span>
-                  <span className="truncate text-xs text-tinta/60">
+                  <span className="truncate text-sm text-tinta/65">
                     <span className="sm:hidden">automática</span>
                     <span className="hidden sm:inline">
                       se calcula sola · igual en todos los periodos

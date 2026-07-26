@@ -156,7 +156,7 @@ export default function AsistenciaPanel({ grupo }) {
         <>
           {/* Pase de lista: fecha + conteo + lista de estudiantes */}
           <label htmlFor="fecha" className="block">
-            <span className="mb-1 block text-xs text-tinta/60">Fecha</span>
+            <span className="mb-1 block text-sm text-tinta/60">Fecha</span>
             <input
               id="fecha"
               type="date"
@@ -241,7 +241,7 @@ function ResumenTabla({ estudiantes, resumen, cargando }) {
             <p className="truncate font-medium text-tinta">
               {m.estudiante.nombre || m.estudiante.correo}
             </p>
-            <div className="mt-1 flex flex-wrap gap-x-3 text-xs">
+            <div className="mt-1 flex flex-wrap gap-x-3 text-sm">
               <span className="text-pizarra">Presente: <b>{r.presente}</b></span>
               <span className="text-margen">Ausente: <b>{r.ausente}</b></span>
               <span className="text-guaria">Tardía: <b>{r.tardia}</b></span>

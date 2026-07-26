@@ -96,7 +96,7 @@ export default function GrupoForm({
             value={materia}
             onChange={(e) => setMateria(e.target.value)}
           />
-          <p className="mt-1 text-xs text-tinta/60">
+          <p className="mt-1 text-sm text-tinta/60">
             Si es técnico, acá va la sub-área (ej. Diseño de Software).
           </p>
         </div>
@@ -112,7 +112,7 @@ export default function GrupoForm({
             value={especialidad}
             onChange={(e) => setEspecialidad(e.target.value)}
           />
-          <p className="mt-1 text-xs text-tinta/60">
+          <p className="mt-1 text-sm text-tinta/60">
             Solo si es técnico. En materias regulares dejalo vacío.
           </p>
         </div>
@@ -161,7 +161,7 @@ export default function GrupoForm({
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-tinta/60">
+        <p className="mt-1 text-sm text-tinta/60">
           El grupo dura todo el año; las notas van por periodo.
         </p>
       </div>
@@ -183,13 +183,13 @@ export default function GrupoForm({
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-tinta/60">
+        <p className="mt-1 text-sm text-tinta/60">
           Si elegís una modalidad, los rubros oficiales del MEP se cargan solos.
           Después podés ajustarlos en la pestaña Rubros.
         </p>
 
         {mepModalidad && PRESETS[mepModalidad] && (
-          <div className="mt-2 rounded-cuaderno border border-guaria/25 bg-guaria/5 px-3 py-2 text-xs text-tinta/75">
+          <div className="mt-2 rounded-cuaderno border border-guaria/25 bg-guaria/5 px-3 py-2 text-sm text-tinta/75">
             <p className="mb-1 font-medium text-guaria">
               Rubros que se van a cargar:
             </p>
@@ -223,7 +223,7 @@ export default function GrupoForm({
         />
         <span>
           Requiere mi aprobación para unirse
-          <span className="block text-xs text-tinta/60">
+          <span className="block text-sm text-tinta/60">
             Si lo activás, los estudiantes que usen el código quedan pendientes
             hasta que vos los aprobés.
           </span>

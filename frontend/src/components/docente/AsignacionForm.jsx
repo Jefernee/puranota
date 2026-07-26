@@ -258,7 +258,7 @@ export default function AsignacionForm({
               </span>
             </div>
             {pctRubro > 0 && (
-              <p className="mt-1 text-xs text-tinta/60">
+              <p className="mt-1 text-sm text-tinta/60">
                 {rubro}: {pctRubro}% · disponible {disponible}%
               </p>
             )}
@@ -295,7 +295,7 @@ export default function AsignacionForm({
           />
           <span>
             El estudiante entrega un archivo
-            <span className="block text-xs text-tinta/60">
+            <span className="block text-sm text-tinta/60">
               Desactivalo para una prueba escrita o nota directa: el estudiante no
               sube nada y vos le ponés la nota en Revisión.
             </span>
@@ -326,7 +326,7 @@ export default function AsignacionForm({
               />
               <span>
                 Permitir entregas tardías
-                <span className="block text-xs text-tinta/60">
+                <span className="block text-sm text-tinta/60">
                   Si lo desactivás, no se podrá entregar después de la fecha límite.
                 </span>
               </span>
@@ -352,7 +352,7 @@ export default function AsignacionForm({
                     %
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-tinta/60">
+                <p className="mt-1 text-sm text-tinta/60">
                   Se le baja ese % a la nota de esa entrega. Poné 0 para no rebajar.
                 </p>
               </div>
@@ -420,7 +420,7 @@ export default function AsignacionForm({
               ))}
             </ul>
           )}
-          <p className="mt-1 text-xs text-tinta/60">
+          <p className="mt-1 text-sm text-tinta/60">
             Fotos o PDF (máx 10 MB c/u). Lo ve el estudiante en la asignación.
           </p>
         </div>
@@ -437,7 +437,7 @@ export default function AsignacionForm({
           />
           <span>
             Visible para los estudiantes
-            <span className="block text-xs text-tinta/60">
+            <span className="block text-sm text-tinta/60">
               Desactivala para prepararla y publicarla después.
             </span>
           </span>
@@ -462,7 +462,7 @@ export default function AsignacionForm({
 function Seccion({ titulo, children }) {
   return (
     <div className="space-y-4 border-t border-tinta/10 pt-5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-tinta/60">
+      <p className="text-sm font-semibold uppercase tracking-wide text-tinta/60">
         {titulo}
       </p>
       {children}

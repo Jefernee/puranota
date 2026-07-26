@@ -31,9 +31,86 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  /* ─── Defensas contra el desborde horizontal ──────────────────────────────
+     No se persiguen desbordes pantalla por pantalla: se hacen imposibles acá.
+     Un texto largo, un nombre de archivo, un correo o una tabla ancha NO deben
+     poder sacar de cuadro ningún módulo. */
+
+  /* (1) La causa número uno. Los hijos de flex y grid nacen con
+     `min-width: auto`, que les impide encogerse por debajo de su contenido:
+     por eso un nombre largo empuja la fila entera fuera de la pantalla. Se
+     aplica solo a contenedores y texto, NUNCA a controles de formulario ni
+     botones, que sí necesitan su ancho mínimo natural. */
+  div,
+  section,
+  article,
+  aside,
+  header,
+  footer,
+  main,
+  nav,
+  ul,
+  ol,
+  li,
+  dl,
+  dd,
+  p,
+  span,
+  td,
+  th,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    min-width: 0;
+  }
+
+  /* (2) Nada multimedia puede exceder a su contenedor. */
+  img,
+  video,
+  svg,
+  canvas,
+  iframe,
+  embed,
+  object {
+    max-width: 100%;
+  }
+
+  /* (3) Los campos de formulario tampoco: `input` trae un ancho por defecto
+     del navegador que se pasa en pantallas angostas. */
+  input,
+  textarea,
+  select,
+  button {
+    max-width: 100%;
+  }
+
+  /* (4) Las tablas anchas se desplazan dentro de su caja, no empujan la página.
+     Igual conviene envolverlas en un contenedor con scroll propio. */
+  table {
+    max-width: 100%;
+  }
+
+  /* (5) El texto preformateado se ajusta en vez de estirarse. */
+  pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
   body {
     @apply bg-papel text-tinta font-body antialiased;
     min-height: 100vh;
+
+    /* Red de seguridad contra el desborde horizontal en celular.
+       `clip` en vez de `hidden` a propósito: `hidden` crea un contenedor de
+       scroll y rompería el encabezado `sticky`. */
+    overflow-x: clip;
+
+    /* Nombres de archivo, correos y URLs son cadenas largas sin espacios: sin
+       esto empujan el ancho de su contenedor y sacan la página de cuadro. */
+    overflow-wrap: break-word;
   }
 
   h1,

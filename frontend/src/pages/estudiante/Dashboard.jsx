@@ -274,10 +274,10 @@ export default function DashboardEstudiante() {
                   return (
                     <li key={a.id} className="border-l-2 border-guaria/50 pl-3">
                       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-guaria">
+                        <span className="text-sm font-semibold uppercase tracking-wide text-guaria">
                           {grupoTxt || 'Aviso'}
                         </span>
-                        <span className="text-xs text-tinta/60">
+                        <span className="text-sm text-tinta/60">
                           {formatearFecha(a.creado_en, false)}
                         </span>
                       </div>
@@ -330,7 +330,7 @@ function GrupoContenido({ g }) {
           {g.grupo?.nombre || (pendiente ? 'Grupo en revisión' : 'Grupo')}
         </p>
         {pendiente ? (
-          <span className="shrink-0 rounded-full bg-margen/10 px-2 py-0.5 text-xs font-medium text-margen">
+          <span className="shrink-0 rounded-full bg-margen/10 px-2 py-0.5 text-sm font-medium text-margen">
             Pendiente
           </span>
         ) : (

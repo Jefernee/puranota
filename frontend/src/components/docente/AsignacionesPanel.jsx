@@ -176,15 +176,15 @@ export default function AsignacionesPanel({ grupo }) {
             <li
               key={a.id}
               onClick={() => setVerAsig(a.id)}
-              className="tarjeta-cuaderno cursor-pointer px-5 py-4 pl-7 transition-shadow hover:shadow-md"
+              className="tarjeta-cuaderno cursor-pointer px-4 py-4 transition-shadow hover:shadow-md sm:px-5 sm:pl-7"
               title="Abrir la revisión"
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-bold text-tinta">{a.titulo}</h3>
+                    <h3 className="min-w-0 break-words font-bold text-tinta">{a.titulo}</h3>
                     {!a.visible && (
-                      <span className="rounded-full bg-tinta/10 px-2 py-0.5 text-xs text-tinta/60">
+                      <span className="rounded-full bg-tinta/10 px-2 py-0.5 text-sm text-tinta/60">
                         Oculta
                       </span>
                     )}
@@ -195,7 +195,7 @@ export default function AsignacionesPanel({ grupo }) {
                       {a.porcentaje != null ? ` · ${a.porcentaje}%` : ''}
                     </span>
                     {a.clase_id && (
-                      <span className="rounded-full bg-guaria/10 px-2.5 py-0.5 font-medium text-guaria">
+                      <span className="max-w-full truncate rounded-full bg-guaria/10 px-2.5 py-0.5 font-medium text-guaria">
                         🎬 {clases.find((c) => c.id === a.clase_id)?.titulo || 'Clase'}
                       </span>
                     )}
@@ -207,7 +207,7 @@ export default function AsignacionesPanel({ grupo }) {
                       : 'Sin fecha límite'}
                   </p>
                   {a.fecha_limite && !a.permite_tardias && (
-                    <p className="mt-0.5 text-xs text-margen">
+                    <p className="mt-0.5 text-sm text-margen">
                       No admite entregas tardías
                     </p>
                   )}
@@ -242,7 +242,7 @@ export default function AsignacionesPanel({ grupo }) {
               )}
 
               {Array.isArray(a.rubrica) && a.rubrica.length > 0 && (
-                <p className="mt-2 text-xs text-tinta/60">
+                <p className="mt-2 text-sm text-tinta/60">
                   <span className="font-semibold uppercase tracking-wide text-tinta/55">
                     Evalúa:{' '}
                   </span>

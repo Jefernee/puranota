@@ -172,7 +172,7 @@ export default function GrupoEstudiante() {
                   >
                     <span className="flex items-center gap-2">
                       <span
-                        className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ${
+                        className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-sm font-bold ${
                           activa ? 'bg-papel/25 text-papel' : 'bg-pizarra/10 text-pizarra'
                         }`}
                       >
@@ -180,7 +180,7 @@ export default function GrupoEstudiante() {
                       </span>
                       <span className="hidden min-w-0 items-center gap-1 truncate lg:flex">
                         {c.titulo}
-                        {tieneVideo(c) && <span className="shrink-0 text-xs">▶</span>}
+                        {tieneVideo(c) && <span className="shrink-0 text-sm">▶</span>}
                       </span>
                     </span>
                   </button>
@@ -193,7 +193,7 @@ export default function GrupoEstudiante() {
               <article className="min-w-0 space-y-4">
                 <header className="flex items-start justify-between gap-4 border-b border-tinta/10 pb-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-guaria">
+                    <p className="text-sm font-semibold uppercase tracking-wide text-guaria">
                       Clase {idxClase + 1} de {clases.length}
                     </p>
                     <h2 className="text-xl font-bold leading-tight text-tinta sm:text-2xl">
@@ -250,14 +250,14 @@ export default function GrupoEstudiante() {
                                 <p className="truncate font-semibold text-tinta">
                                   {a.titulo}
                                 </p>
-                                <p className="truncate text-xs text-tinta/65">
+                                <p className="truncate text-sm text-tinta/65">
                                   {etiquetaPeriodo(a.periodo)} · {a.puntos} pts
                                   {a.fecha_limite &&
                                     ` · Entrega ${formatearFecha(a.fecha_limite, false)}`}
                                 </p>
                               </div>
                               <span
-                                className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${TONO_BADGE[e.tono]}`}
+                                className={`shrink-0 rounded-full px-2.5 py-1 text-sm font-medium ${TONO_BADGE[e.tono]}`}
                               >
                                 {e.etiqueta}
                               </span>

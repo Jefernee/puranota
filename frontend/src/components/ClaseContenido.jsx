@@ -83,8 +83,8 @@ export default function ClaseContenido({ clase, compacto = false }) {
       )}
       {materiales.length > 0 && (
         <div className="rounded-cuaderno border border-tinta/10 bg-tinta/[0.02] p-4">
-          <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-tinta/80">
-            <span aria-hidden="true">📎</span> Material de la clase
+          <p className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-tinta/65">
+            Material de la clase
           </p>
           <GaleriaArchivos archivos={materiales} />
         </div>

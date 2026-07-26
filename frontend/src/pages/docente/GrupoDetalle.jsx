@@ -163,7 +163,7 @@ export default function GrupoDetalle() {
       {tab === 'ajustes' && (
         <div className="tarjeta-cuaderno px-4 py-5 sm:px-5 sm:pl-7">
           <p className="mb-1 text-sm font-medium text-tinta/80">Datos del grupo</p>
-          <p className="mb-4 text-xs text-tinta/60">
+          <p className="mb-4 text-sm text-tinta/65">
             Cambiá la materia, especialidad, sección, nivel, cantidad de periodos o
             el Modo MEP. La asistencia y los rubros se ajustan en la pestaña Rubros.
           </p>
@@ -207,7 +207,7 @@ export default function GrupoDetalle() {
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
           <Volver to="/docente">Mis grupos</Volver>
           <span className="text-tinta/25" aria-hidden="true">/</span>
-          <h1 className="text-xl font-bold leading-tight text-tinta sm:text-2xl">
+          <h1 className="min-w-0 break-words text-xl font-bold leading-tight text-tinta sm:text-2xl">
             {[tituloGrupo, ...chipsGrupo].join(' · ')}
           </h1>
           <span className="text-sm font-medium text-tinta">

@@ -154,9 +154,9 @@ export default function ClaseForm({
                       </button>
                     )}
                   </div>
-                  {ok && <p className="mt-0.5 text-xs text-pizarra">✓ Video reconocido.</p>}
+                  {ok && <p className="mt-0.5 text-sm text-pizarra">✓ Video reconocido.</p>}
                   {mal && (
-                    <p className="mt-0.5 text-xs text-margen">No reconozco ese enlace.</p>
+                    <p className="mt-0.5 text-sm text-margen">No reconozco ese enlace.</p>
                   )}
                 </div>
               )
@@ -222,7 +222,7 @@ export default function ClaseForm({
               }}
             />
           </label>
-          <p className="mt-1 text-xs text-tinta/60">
+          <p className="mt-1 text-sm text-tinta/60">
             MP4, máx 200 MB c/u. Podés agregar varios.
           </p>
         </div>
@@ -313,7 +313,7 @@ export default function ClaseForm({
         />
         <span>
           Visible para los estudiantes
-          <span className="block text-xs text-tinta/60">
+          <span className="block text-sm text-tinta/60">
             Desactivala para prepararla y publicarla después.
           </span>
         </span>
@@ -330,7 +330,7 @@ export default function ClaseForm({
               style={{ width: `${progresoVideo}%` }}
             />
           </div>
-          <p className="text-xs text-tinta/65">
+          <p className="text-sm text-tinta/65">
             Subiendo video… {progresoVideo}%
             {progresoVideo === 100 && ' — guardando, no cierres esta ventana.'}
           </p>

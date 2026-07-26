@@ -137,7 +137,7 @@ export default function AvisosModal({ abierto, onCerrar, docenteId, grupos }) {
                     }`}
                   >
                     <span
-                      className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border text-[11px] font-bold transition-colors ${
+                      className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border text-[13px] font-bold transition-colors ${
                         on
                           ? 'border-pizarra bg-pizarra text-papel'
                           : 'border-tinta/30 text-transparent'
@@ -150,7 +150,7 @@ export default function AvisosModal({ abierto, onCerrar, docenteId, grupos }) {
                       <span className="block truncate text-sm font-semibold text-tinta">
                         {g.nombre}
                       </span>
-                      <span className="block truncate text-xs text-tinta/65">
+                      <span className="block truncate text-sm text-tinta/65">
                         {detalle}
                       </span>
                     </span>
@@ -225,7 +225,7 @@ export default function AvisosModal({ abierto, onCerrar, docenteId, grupos }) {
                     </button>
                   )}
                 </div>
-                <p className="mt-1.5 text-xs text-tinta/60">
+                <p className="mt-1.5 text-sm text-tinta/60">
                   {formatearFecha(a.creado_en, false)} ·{' '}
                   {(a.grupo_ids || []).map(nombreGrupo).join(', ') || 'sin grupos'}
                 </p>
