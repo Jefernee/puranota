@@ -30,10 +30,35 @@ export function redondear(n, dec = DECIMALES) {
 }
 
 /**
- * Formatea un porcentaje al estilo de Costa Rica: "31,50%". Devuelve "—" si no
- * hay valor. Es la ÚNICA forma en que se escriben porcentajes en la interfaz.
+ * Formatea un porcentaje al estilo de Costa Rica. Es la ÚNICA forma en que se
+ * escriben porcentajes en la interfaz. Devuelve "—" si no hay valor.
+ *
+ * NO muestra decimales cuando no los hay: un registro lleno de "5,00%" y
+ * "8,00%" se lee peor y no aporta nada. Los decimales aparecen solo cuando
+ * existen de verdad.
+ *
+ *    5     → "5%"
+ *    8     → "8%"
+ *    31.5  → "31,5%"
+ *    31.47 → "31,47%"
+ *
+ * La precisión no se pierde: se redondea a 2 decimales (REAC Art. 26), solo se
+ * omiten los ceros de relleno. Para el registro oficial, donde el reglamento
+ * pide los dos decimales escritos, se usa `pctFijo`.
  */
 export function pct(n, dec = DECIMALES) {
+  if (n == null || Number.isNaN(n)) return '—'
+  return (
+    Number(n).toLocaleString('es-CR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: dec,
+    }) + '%'
+  )
+}
+
+/** Porcentaje con los dos decimales SIEMPRE escritos ("5,00%"), para el
+ *  registro oficial y las exportaciones (REAC Art. 26). */
+export function pctFijo(n, dec = DECIMALES) {
   if (n == null || Number.isNaN(n)) return '—'
   return (
     Number(n).toLocaleString('es-CR', {

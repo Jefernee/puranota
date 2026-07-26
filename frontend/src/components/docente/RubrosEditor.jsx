@@ -373,22 +373,25 @@ export default function RubrosEditor({ grupo, onGuardar }) {
         <div className="space-y-4">
           {/* Encabezados de columna */}
           <div className="flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wide text-tinta/55">
-            <span className="flex-1">Rubro</span>
-            <span className="w-28 text-right">Ponderación</span>
-            <span className="w-9" aria-hidden="true" />
+            <span className="min-w-0 flex-1">Rubro</span>
+            <span className="w-20 shrink-0 text-right sm:w-28">
+              <span className="sm:hidden">Peso</span>
+              <span className="hidden sm:inline">Ponderación</span>
+            </span>
+            <span className="w-9 shrink-0" aria-hidden="true" />
           </div>
 
           <div className="space-y-2">
             {listaActiva.map((r, i) => (
               <div key={i} className="flex items-center gap-2">
                 <input
-                  className="campo flex-1 text-base"
+                  className="campo min-w-0 flex-1 text-base"
                   placeholder="Ej. Tareas"
                   value={r.nombre}
                   onChange={(e) => actualizar(i, 'nombre', e.target.value)}
                   aria-label="Nombre del rubro"
                 />
-                <div className="relative w-28 shrink-0">
+                <div className="relative w-20 shrink-0 sm:w-28">
                   <input
                     type="number"
                     min="0"
@@ -418,13 +421,16 @@ export default function RubrosEditor({ grupo, onGuardar }) {
             {/* Asistencia: se ve como un rubro más, pero su nota se calcula sola. */}
             {asisActiva.activa && (
               <div className="flex items-center gap-2">
-                <div className="campo flex flex-1 items-center gap-2 bg-tinta/[0.04] text-base text-tinta">
-                  <span className="font-medium">Asistencia</span>
-                  <span className="text-xs text-tinta/60">
-                    se calcula sola · igual en todos los periodos
+                <div className="campo flex min-w-0 flex-1 items-center gap-2 bg-tinta/[0.04] text-base text-tinta">
+                  <span className="shrink-0 font-medium">Asistencia</span>
+                  <span className="truncate text-xs text-tinta/60">
+                    <span className="sm:hidden">automática</span>
+                    <span className="hidden sm:inline">
+                      se calcula sola · igual en todos los periodos
+                    </span>
                   </span>
                 </div>
-                <div className="relative w-28 shrink-0">
+                <div className="relative w-20 shrink-0 sm:w-28">
                   <input
                     type="number"
                     min="0"

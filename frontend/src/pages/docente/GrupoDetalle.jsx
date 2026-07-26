@@ -156,12 +156,12 @@ export default function GrupoDetalle() {
       {tab === 'notas' && <NotasPanel grupo={grupo} />}
       {tab === 'prematricula' && <PrematriculaPanel grupoId={grupo.id} />}
       {tab === 'rubros' && (
-        <div className="tarjeta-cuaderno px-5 py-5 pl-7">
+        <div className="tarjeta-cuaderno px-4 py-5 sm:px-5 sm:pl-7">
           <RubrosEditor grupo={grupo} onGuardar={handleRubros} />
         </div>
       )}
       {tab === 'ajustes' && (
-        <div className="tarjeta-cuaderno px-5 py-5 pl-7">
+        <div className="tarjeta-cuaderno px-4 py-5 sm:px-5 sm:pl-7">
           <p className="mb-1 text-sm font-medium text-tinta/80">Datos del grupo</p>
           <p className="mb-4 text-xs text-tinta/60">
             Cambiá la materia, especialidad, sección, nivel, cantidad de periodos o
