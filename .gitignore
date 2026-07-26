@@ -12,6 +12,11 @@ dist/
 build/
 .vite/
 
+# ---- Wrangler (CLI de Cloudflare) ----
+# Guarda en caché el id y el correo de la cuenta: no son secretos, pero no
+# tienen por qué estar en un repositorio público.
+.wrangler/
+
 # ---- Supabase CLI ----
 supabase/.temp/
 supabase/.branches/
