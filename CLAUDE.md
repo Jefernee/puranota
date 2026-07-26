@@ -144,11 +144,13 @@ C:\puranota\
         ProtectedRoute.jsx AuthShell.jsx CampoContrasena.jsx MenuAcciones.jsx
         EstadoVacio.jsx SkeletonLista.jsx GaleriaArchivos.jsx
         ClaseContenido.jsx Logo.jsx
+        IconoTipo.jsx        (íconos de tipo de actividad, §5.5)
+        DetectorDesborde.jsx (solo desarrollo, §5.6)
         docente/  GrupoForm RubrosEditor AsignacionesPanel AsignacionForm
                   RubricaEditor RevisionAsignacion AsistenciaPanel ClasesPanel
                   ClaseForm EstudiantesPanel PrematriculaPanel CodigoAcceso
                   NotasPanel AvisosModal
-        estudiante/ NotasEstudiante
+        estudiante/ EvaluacionEstudiante  (registro del estudiante; reemplazó a NotasEstudiante)
       pages/
         Login Registro Onboarding OlvideContrasena Restablecer
         MiCuenta CambiarClaveObligatorio NoEncontrado
@@ -229,9 +231,70 @@ Paleta en variables CSS (`index.css`), en canales RGB para usarse con
 | `--c-pizarra` (primario) | `#176B4D` | `#3CD0A7` |
 | `--c-guaria` (acento) | `#8A4FBE` | `#BB92F0` |
 | `--c-margen` (rojo cuaderno) | `#E2574C` | `#F67A70` |
+| `--c-ambar` (advertencias) | `#B07418` | `#E0B65C` |
 
 **Regla dura: nunca usar `bg-white` ni colores fijos.** Siempre los tokens
 (`bg-superficie`, `text-tinta`, `border-tinta/15`…), o el tema oscuro se rompe.
+Ya pasó: las advertencias usaban `bg-amber-50` con `text-amber-700` de Tailwind
+y en oscuro quedaban ilegibles. Por eso existe el token `ambar`.
+
+### 5.5 Reglas de interfaz (2026-07-25) — no aflojarlas
+
+Salieron de revisar el producto contra un sistema académico real (Aula Virtual de
+la UISIL, capturas en `imagenes/`). Aplican a **docente y estudiante por igual**.
+
+**1. Registro, no tarjetas.** Las notas y las listas de actividades se ven como un
+registro: tabla en escritorio, filas compactas en celular. Nada de tarjetas
+grandes ni barras de progreso — no es lenguaje académico.
+
+**2. Sin emoji decorativos.** Los títulos de sección son solo texto. Se conservan
+únicamente los de las **pestañas de navegación** (decisión del docente). Para
+íconos reales existe `components/IconoTipo.jsx`: SVG de trazo en insignia
+circular, todos del mismo tamaño óptico. Los caracteres tipográficos (`▣ ◆ ≡`) se
+ven crudos porque cada glifo trae su propio peso y su propia caja.
+
+**3. El color informa o no está.** Nada de semáforos decorativos. Verde =
+positivo/cumplido, ámbar = espera o advertencia, rojo = error o vencido, tinta =
+neutro. El morado quedó solo donde distingue docente de estudiante.
+
+**4. Tipografía mínima.** Nada por debajo de 13 px. Cuerpo 15–16 px, secundario
+14 px, encabezados de columna 13 px en versalitas. Títulos de página 18 px en
+celular y 24 px en escritorio — más grande se siente enorme cuando el título
+ocupa varias líneas.
+
+**5. Los textos no se recortan.** Nombres y títulos se muestran completos, en
+varias líneas si hace falta. Solo se recorta donde hay un ancho máximo explícito,
+como los encabezados de columna de una tabla.
+
+**6. Lo tocable parece tocable.** Fila entera pulsable, flecha `›` a la derecha,
+fondo al tocar. Y al revés: lo que **no** se abre (la fila de asistencia) no lleva
+flecha. Objetivo táctil mínimo 40 px, 44 px en botones principales.
+
+**7. Los números se alinean en columna propia.** En celular no se dejan al final
+de cada línea: el largo del texto de la izquierda decidiría dónde cae cada uno.
+
+**8. Celular = poco relleno.** Las tarjetas usan 16 px por lado en celular
+(`px-4 py-4 sm:px-5 sm:pl-7`). Antes gastaban 48 px de los ~390 de pantalla.
+
+**9. Nada puede desbordar.** Ver §5.6.
+
+### 5.6 Defensas contra el desborde horizontal
+
+Están en la base de `index.css`, para no perseguirlas pantalla por pantalla:
+
+1. **`min-width: 0`** en contenedores y texto. Es la causa número uno: los hijos
+   de flex y grid nacen con `min-width: auto`, que les impide encogerse por
+   debajo de su contenido, así que un nombre largo empuja la fila fuera de la
+   pantalla. **No se aplica a botones ni campos**, que necesitan su ancho mínimo.
+2. **`max-width: 100%`** en multimedia, campos y tablas.
+3. **`overflow-x: clip`** en el body. `clip` y no `hidden` a propósito: `hidden`
+   crea un contenedor de scroll y rompe el encabezado `sticky`.
+4. **`overflow-wrap: break-word`** global; los nombres de archivo usan
+   `break-all`, porque no tienen espacios donde partirse.
+
+**Herramienta:** `components/DetectorDesborde.jsx` señala en pantalla cualquier
+elemento más ancho que la ventana, con su etiqueta y cuántos píxeles se pasa.
+Solo corre en desarrollo — Vite lo excluye del sitio publicado.
 
 - Tipografía: display **Bricolage Grotesque** (títulos, logo "PuraNota✓"), cuerpo
   **Instrument Sans**.

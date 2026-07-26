@@ -8,7 +8,7 @@
 > Complementa a [`CLAUDE.md`](../CLAUDE.md), que describe el sistema **como está
 > hoy**. Este documento describe **a dónde va**.
 >
-> v2 · 2026-07-25 · corregido tras revisar el Aula Virtual de la UISIL (§3.0).
+> v3 · 2026-07-25 · incluye el estado real de lo ya construido.
 
 ---
 
@@ -656,9 +656,56 @@ segundo proyecto Supabase gratis `puranota-staging`.
 
 ---
 
+## Lo que ya está hecho (2026-07-25)
+
+### Bloque 0 — completo
+
+| | |
+|---|---|
+| **Control de versiones** | Repositorio **público** `Jefernee/puranota` + repositorio **privado** `Jefernee/puranota-respaldos` (D16). `.env` e `imagenes/` fuera del control de versiones. |
+| **Keep-alive** | Tres capas: UptimeRobot cada 5 min (verificado en los registros de Supabase), GitHub Action dos veces al día, tarea de Windows. |
+| **Respaldo automático** | Action semanal cifrado con AES256, **probado de punta a punta**: el volcado trae 13 tablas, 13 bloques de datos y 29 políticas RLS. Descifrado verificado. |
+| **Notas reescritas** | Modelo de registro (§3), con 17 comprobaciones sobre el caso del plan. |
+| **Los 3 errores de notas** | Penalización fantasma, actividades sin Valor % y la leyenda equivocada: corregidos. |
+| **`asignaciones.tipo`** | Migración aplicada (D13). |
+
+### Bloque 1 — parcial
+
+| | |
+|---|---|
+| **Despliegue** | Publicado en `puranota.pages.dev` con `noindex`, verificado: rutas profundas sin 404, variables de entorno en el build, cabeceras de seguridad. Cada push publica solo. |
+| **Pendiente** | Pruebas automáticas · migración a `rubro_id` · staging con datos masivos · export a Excel · módulo admin |
+
+### Pasada de interfaz (dos tandas)
+
+Reglas nuevas, documentadas en `CLAUDE.md` §5.5 y §5.6:
+
+- **Registro, no tarjetas.** Detalle de la actividad rehecho con bloque de
+  Revisión, tabla de Datos generales y galería de archivos uniforme.
+- **Sin emoji decorativos** ni caracteres tipográficos como íconos → `IconoTipo.jsx`.
+- **Color que informa o no está.** Fuera el arcoíris de la barra de rubros y el
+  morado decorativo. Token `ambar` nuevo (las advertencias eran ilegibles en oscuro).
+- **Tipografía mínima de 13 px**, cuerpo en 15–16, títulos de 18 px en celular.
+- **Textos completos**, sin recorte, en 12 componentes.
+- **Lo tocable parece tocable**: fila entera, flecha, respuesta al toque.
+- **Celular compacto**: 16 px de relleno en vez de 48; encabezados y filtros rehechos.
+- **Defensas contra el desborde** en la base del CSS + `DetectorDesborde.jsx`.
+
+### Pendientes de configuración (5 minutos, los hace el docente)
+
+- **CORS de Cloudflare R2** para `https://puranota.pages.dev` — sin esto, subir
+  archivos falla **solo en producción**.
+- **URLs de autenticación en Supabase** — sin esto, el correo de recuperación
+  sigue mandando a `localhost`.
+
+Ambos están detallados en [`despliegue.md`](./despliegue.md) §2.
+
+---
+
 ## Registro de cambios
 
 | Fecha | Cambio | Motivo |
 |---|---|---|
 | 2026-07-25 | v1 inicial | Cerrar el ciclo de cambios de idea |
+| 2026-07-25 | **v3** — se agrega "Lo que ya está hecho": bloque 0 completo, despliegue en línea y las dos tandas de interfaz. Reglas nuevas en CLAUDE.md §5.5 y §5.6. | Dejar por escrito el estado real |
 | 2026-07-25 | **v2** — reescrito §3 completo: tabla de registro en vez de tarjetas y barras; una sola NOTA FINAL; vocabulario Valor%/Calificación. Nuevo §3.0 y §3.5. §8 reestructurado a 4 pestañas. | Revisión del Aula Virtual de la UISIL (capturas en `imagenes/`) |
