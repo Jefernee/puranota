@@ -10,8 +10,10 @@
 > - `docs/PLAN.md` → decisiones cerradas y orden de trabajo (a dónde va).
 > - `docs/ADR.md` → historial de decisiones (ADR-001 … ADR-006). Contexto de *por
 >   qué* se llegó acá. Si hay contradicción, **manda este archivo**.
-> - `backend/aula_cr_fase1_schema.sql` → el SQL original de Fase 1. **Está
->   desactualizado**: faltan las columnas agregadas después (ver §6).
+> - `backend/esquema.sql` → **espejo fiel de la base**, generado desde el
+>   catálogo de Postgres el 2026-07-26. Con esto se levanta el sistema de cero.
+> - `docs/staging.md` → el ambiente de pruebas con datos falsos y con qué
+>   usuario entrar.
 >
 > Última revisión: 2026-07-25.
 
@@ -105,7 +107,7 @@ C:\puranota\
   CLAUDE.md                  ← este documento (fuente de verdad)
   README.md                  ← presentación del proyecto y cómo correrlo
   backend/
-    aula_cr_fase1_schema.sql ← SQL original (desactualizado, ver §6)
+    esquema.sql              ← espejo fiel de la base (tablas, RLS, triggers)
   supabase/functions/
     firmar-subida/           ← firma URL PUT a R2 (imágenes/PDF 10 MB, video 200 MB)
     borrar-archivo/          ← borra objetos de R2 (limpieza)
@@ -320,8 +322,9 @@ Todas las tablas están en el esquema `public` y **todas tienen RLS activo**.
 
 > ✅ Esto se **verificó contra la base real el 2026-07-25**, no contra el SQL.
 >
-> ⚠️ `backend/aula_cr_fase1_schema.sql` tiene solo el estado original. Las
-> columnas marcadas **(+)** se agregaron después a mano y **no están en ese SQL**.
+> `backend/esquema.sql` **sí está al día** (regenerado desde el catálogo el
+> 2026-07-26 y verificado contra staging). Las columnas marcadas **(+)** se
+> agregaron a mano después de la Fase 1 y ya están todas ahí.
 
 **`perfiles`** — se crea sola por trigger al registrarse (`on_auth_user_created`).
 `id` (= `auth.users.id`), `correo`, `nombre`, `telefono`, `seccion`,
@@ -507,8 +510,11 @@ alter policy "estudiante gestiona sus archivos" on public.entrega_archivos
       and e.estado = 'entregada'));
 ```
 
-> **Tarea abierta:** regenerar `backend/aula_cr_fase1_schema.sql` desde la base
-> real para que vuelva a ser un espejo fiel. Hoy no lo es.
+> ✅ **Resuelto el 2026-07-26:** `backend/esquema.sql` es el espejo fiel de la
+> base. Se generó leyendo el catálogo de Postgres y se comprobó aplicándolo en
+> un proyecto vacío: 13 tablas, 110 columnas, 29 políticas, 9 funciones, 4
+> triggers y 43 restricciones, igual que producción. Si volvés a cambiar el
+> esquema a mano, actualizá también ese archivo.
 
 ---
 
@@ -948,9 +954,18 @@ los datos vuelven intactos.
 ```powershell
 cd C:\puranota\frontend
 npm install
-npm run dev          # http://localhost:5173
+npm run dev          # http://localhost:5173 → base de PRODUCCIÓN (ojo)
+npm run dev:staging  # http://localhost:5173 → base de PRUEBAS (docs/staging.md)
+npm test             # 165 comprobaciones de notas, MEP, periodos y entregas
 npm run build        # build estático para Cloudflare Pages
 ```
+
+**`npm test` corre en 1,2 segundos y no toca la red.** Si tocás `lib/notas.js`,
+corrélo antes de dar nada por bueno: ahí está el caso de referencia del plan
+(NOTA FINAL 24,50%) y los tres errores de §7.6, para que no vuelvan.
+
+La cabecera avisa en qué ambiente estás cuando corrés en local: pastilla ámbar
+para la base de pruebas, roja para la real (`components/Ambiente.jsx`).
 
 Edge Functions:
 ```powershell
@@ -980,12 +995,13 @@ Recorrido de prueba de punta a punta:
 
 ## 13. Pendientes conocidos
 
-**De notas (§7.6):** penalización fantasma en notas directas (A), asignaciones con
-`porcentaje` NULL (B), leyenda equivocada en el cuadro del docente (C).
+**De notas:** los errores A, B y C de §7.6 están **corregidos** y con pruebas que
+los cuidan (`npm test`). Siguen abiertos D, E y F, que son advertencias, no fallas.
 
-**De infraestructura:** montar el keep-alive externo (§11); regenerar
-`backend/aula_cr_fase1_schema.sql` desde la base real; el repo **no está en git**
-(no hay historial ni respaldo — conviene `git init` + remoto privado).
+**De infraestructura:** ✅ keep-alive externo montado, ✅ repo en git con respaldo
+semanal cifrado, ✅ `backend/esquema.sql` al día, ✅ ambiente de pruebas
+(`docs/staging.md`). Queda **migrar a `rubro_id`** (D5), el **export a Excel** y
+el **módulo admin**.
 
 **De producto (pedidos para después):** SMTP propio para que los correos de
 recuperación sean confiables; export a Excel; notificaciones; bitácora.

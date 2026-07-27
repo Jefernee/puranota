@@ -674,7 +674,10 @@ segundo proyecto Supabase gratis `puranota-staging`.
 | | |
 |---|---|
 | **Despliegue** | Publicado en `puranota.pages.dev` con `noindex`, verificado: rutas profundas sin 404, variables de entorno en el build, cabeceras de seguridad. Cada push publica solo. |
-| **Pendiente** | Pruebas automáticas · migración a `rubro_id` · staging con datos masivos · export a Excel · módulo admin |
+| **Pruebas automáticas (D8)** | **165 comprobaciones** con Vitest sobre `notas`, `mep`, `periodos` y `entregas`, en 1,2 s. Incluyen el caso de referencia de §3.3 y los tres errores de §3.7. Se validaron rompiendo el código a propósito en cuatro puntos: las cuatro mutaciones fueron detectadas. |
+| **Staging (D9)** | Segundo proyecto Supabase (US$0) con el esquema espejo de producción y **datos masivos**: 94 usuarios, 4 grupos, 43 actividades, 735 entregas y ~5.000 asistencias. Se entra con `npm run dev:staging`. Ver [`staging.md`](./staging.md). |
+| **Esquema al día** | `backend/esquema.sql` regenerado desde el catálogo y verificado contra un proyecto vacío (13 tablas, 110 columnas, 29 políticas, 9 funciones, 4 triggers, 43 restricciones). |
+| **Pendiente** | migración a `rubro_id` (D5) · export a Excel · módulo admin · Playwright |
 
 ### Pasada de interfaz (dos tandas)
 
