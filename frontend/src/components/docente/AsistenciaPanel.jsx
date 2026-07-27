@@ -5,8 +5,19 @@ import {
   listarAsistenciaGrupo,
   marcarAsistencia,
 } from '../../services/asistencia.service'
-import { listarEstudiantes } from '../../services/grupos.service'
-import { etiquetaPeriodo, periodoDeFecha } from '../../lib/periodos'
+import { listarEstudiantes, rubrosPorPeriodo, rangoPeriodo } from '../../services/grupos.service'
+import {
+  etiquetaPeriodo,
+  periodoDeFecha,
+  periodosDeGrupo,
+} from '../../lib/periodos'
+import {
+  contarAsistencia,
+  diasRegistrados,
+  esRubroAsistencia,
+  notaAsistencia,
+  pct,
+} from '../../lib/notas'
 
 // Estados posibles con su etiqueta corta y estilos de botón.
 const ESTADOS = [
@@ -38,7 +49,11 @@ export default function AsistenciaPanel({ grupo }) {
   const [error, setError] = useState('')
   const [guardandoId, setGuardandoId] = useState(null)
 
-  const [resumen, setResumen] = useState(null) // estudianteId -> {presente,...}
+  // Filas crudas de todo el año. Se guardan sin agregar para poder recortarlas
+  // por periodo: la NOTA de asistencia se calcula por periodo (Art. 37), así
+  // que un resumen del año entero mostraría números que no son los que cuentan.
+  const [filasAsis, setFilasAsis] = useState(null)
+  const [periodoResumen, setPeriodoResumen] = useState(() => periodoDeFecha(grupo))
   const [cargandoResumen, setCargandoResumen] = useState(false)
 
   async function cargar() {
@@ -92,21 +107,10 @@ export default function AsistenciaPanel({ grupo }) {
     setError('')
     setVista(v)
     // El resumen se carga la primera vez que se entra a esa vista.
-    if (v === 'resumen' && !resumen) {
+    if (v === 'resumen' && !filasAsis) {
       setCargandoResumen(true)
       try {
-        const todos = await listarAsistenciaGrupo(grupoId)
-        const mapa = {}
-        for (const r of todos) {
-          mapa[r.estudiante_id] = mapa[r.estudiante_id] || {
-            presente: 0,
-            ausente: 0,
-            tardia: 0,
-            justificada: 0,
-          }
-          mapa[r.estudiante_id][r.estado]++
-        }
-        setResumen(mapa)
+        setFilasAsis(await listarAsistenciaGrupo(grupoId))
       } catch (e) {
         setError(e?.message || 'No se pudo cargar el resumen.')
         setVista('lista')
@@ -115,6 +119,40 @@ export default function AsistenciaPanel({ grupo }) {
       }
     }
   }
+
+  // Resumen recortado al periodo elegido, con la nota que ese registro otorga.
+  // Así el docente ve exactamente lo que va a contar, no un acumulado del año
+  // que no coincide con ninguna nota.
+  const reglaAsistencia = useMemo(() => {
+    const rubros = rubrosPorPeriodo(grupo)[periodoResumen] || []
+    return rubros.find(esRubroAsistencia) || null
+  }, [grupo, periodoResumen])
+
+  const resumenPeriodo = useMemo(() => {
+    if (!filasAsis) return null
+    const rango = rangoPeriodo(grupo, periodoResumen)
+    const mapa = {}
+    for (const m of estudiantes) {
+      const sid = m.estudiante.id
+      const c = contarAsistencia(
+        filasAsis.filter((r) => r.estudiante_id === sid),
+        rango,
+      )
+      const logro = diasRegistrados(c) > 0 && reglaAsistencia
+        ? notaAsistencia(c, reglaAsistencia)
+        : null
+      mapa[sid] = {
+        ...c,
+        total: diasRegistrados(c),
+        logro,
+        aporta:
+          logro == null || !reglaAsistencia?.porcentaje
+            ? null
+            : (logro * Number(reglaAsistencia.porcentaje)) / 100,
+      }
+    }
+    return mapa
+  }, [filasAsis, estudiantes, grupo, periodoResumen, reglaAsistencia])
 
   return (
     <div className="space-y-4">
@@ -138,6 +176,35 @@ export default function AsistenciaPanel({ grupo }) {
 
       {vista === 'resumen' ? (
         <>
+          {/* La nota de asistencia se define POR PERIODO (Art. 37), así que el
+              resumen también. Un acumulado del año no coincidiría con ninguna
+              nota y haría desconfiar del cuadro. */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {periodosDeGrupo(grupo).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPeriodoResumen(p)}
+                className={`min-h-[40px] rounded-cuaderno border px-4 py-2 text-sm font-semibold shadow-sm transition-colors ${
+                  periodoResumen === p
+                    ? 'border-pizarra bg-pizarra text-papel'
+                    : 'border-tinta/15 bg-superficie text-tinta/70 hover:border-pizarra/40 hover:text-pizarra'
+                }`}
+              >
+                {etiquetaPeriodo(p)}
+              </button>
+            ))}
+          </div>
+          <p className="text-sm text-tinta/65">
+            {(() => {
+              const r = rangoPeriodo(grupo, periodoResumen)
+              return r ? `Del ${r.inicio} al ${r.fin}.` : ''
+            })()}{' '}
+            {reglaAsistencia
+              ? `La asistencia vale ${reglaAsistencia.porcentaje}% de la nota${reglaAsistencia.mep ? ', con la escala del MEP' : ''}.`
+              : 'La asistencia no cuenta para la nota en este periodo.'}
+          </p>
+
           <Alerta tipo="error">{error}</Alerta>
           {cargando ? (
             <p className="text-[15px] text-tinta/70">Cargando…</p>
@@ -148,8 +215,9 @@ export default function AsistenciaPanel({ grupo }) {
           ) : (
             <ResumenTabla
               estudiantes={estudiantes}
-              resumen={resumen}
+              resumen={resumenPeriodo}
               cargando={cargandoResumen}
+              hayNota={!!reglaAsistencia}
             />
           )}
         </>
@@ -233,11 +301,15 @@ export default function AsistenciaPanel({ grupo }) {
   )
 }
 
-function ResumenTabla({ estudiantes, resumen, cargando }) {
+// Resumen del periodo. Además de los conteos muestra lo que ese registro
+// APORTA a la nota, que es el número que el docente necesita verificar y el
+// mismo que ve el estudiante en su registro.
+const VACIO = { presente: 0, ausente: 0, tardia: 0, justificada: 0, total: 0, logro: null, aporta: null }
+
+function ResumenTabla({ estudiantes, resumen, cargando, hayNota }) {
   if (cargando) return <p className="text-[15px] text-tinta/70">Calculando…</p>
   if (!resumen) return null
-  const conteo = (m) =>
-    resumen[m.estudiante.id] || { presente: 0, ausente: 0, tardia: 0, justificada: 0 }
+  const conteo = (m) => resumen[m.estudiante.id] || VACIO
   return (
     <>
     {/* Móvil: tarjetas */}
@@ -246,15 +318,28 @@ function ResumenTabla({ estudiantes, resumen, cargando }) {
         const r = conteo(m)
         return (
           <li key={m.estudiante.id} className="tarjeta-cuaderno px-3.5 py-3 sm:px-4 sm:pl-6">
-            <p className="break-words font-medium text-tinta">
-              {m.estudiante.nombre || m.estudiante.correo}
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <p className="min-w-0 break-words font-medium text-tinta">
+                {m.estudiante.nombre || m.estudiante.correo}
+              </p>
+              {hayNota && (
+                <span className="shrink-0 font-bold tabular-nums text-tinta">
+                  {r.aporta == null ? '—' : pct(r.aporta)}
+                </span>
+              )}
+            </div>
             <div className="mt-1 flex flex-wrap gap-x-3 text-sm">
               <span className="text-pizarra">Presente: <b>{r.presente}</b></span>
               <span className="text-margen">Ausente: <b>{r.ausente}</b></span>
               <span className="text-ambar">Tardía: <b>{r.tardia}</b></span>
               <span className="text-tinta/70">Justif.: <b>{r.justificada}</b></span>
             </div>
+            {r.total > 0 && (
+              <p className="mt-1 text-sm text-tinta/60">
+                {r.total} {r.total === 1 ? 'lección registrada' : 'lecciones registradas'}
+                {r.logro != null && ` · logro ${pct(r.logro, 0)}`}
+              </p>
+            )}
           </li>
         )
       })}
@@ -270,16 +355,15 @@ function ResumenTabla({ estudiantes, resumen, cargando }) {
             <th className="px-2 py-1 text-center font-medium">A</th>
             <th className="px-2 py-1 text-center font-medium">T</th>
             <th className="px-2 py-1 text-center font-medium">J</th>
+            <th className="px-2 py-1 text-center font-medium">Registradas</th>
+            {hayNota && (
+              <th className="px-2 py-1 text-center font-medium">Aporta a la nota</th>
+            )}
           </tr>
         </thead>
         <tbody>
           {estudiantes.map((m) => {
-            const r = resumen[m.estudiante.id] || {
-              presente: 0,
-              ausente: 0,
-              tardia: 0,
-              justificada: 0,
-            }
+            const r = conteo(m)
             return (
               <tr key={m.estudiante.id} className="border-t border-tinta/10">
                 <td className="px-2 py-1.5 text-tinta">
@@ -289,6 +373,14 @@ function ResumenTabla({ estudiantes, resumen, cargando }) {
                 <td className="px-2 py-1.5 text-center text-margen">{r.ausente}</td>
                 <td className="px-2 py-1.5 text-center text-ambar">{r.tardia}</td>
                 <td className="px-2 py-1.5 text-center text-tinta/70">{r.justificada}</td>
+                <td className="px-2 py-1.5 text-center tabular-nums text-tinta/70">
+                  {r.total}
+                </td>
+                {hayNota && (
+                  <td className="px-2 py-1.5 text-center font-semibold tabular-nums text-tinta">
+                    {r.aporta == null ? '—' : pct(r.aporta)}
+                  </td>
+                )}
               </tr>
             )
           })}
