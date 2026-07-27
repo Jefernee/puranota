@@ -179,20 +179,25 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
         </p>
       ) : (
         <>
-          {/* ── ESCRITORIO ─────────────────────────────────────────────────── */}
-          <div className="hidden overflow-x-auto md:block">
+          {/* ── ESCRITORIO ──────────────────────────────────────────────────
+              Va dentro de una tarjeta, igual que el registro del docente: la
+              tabla suelta sobre el fondo se veía plana, como si no fuera un
+              documento. El encabezado lleva su propio fondo para separarse. */}
+          <div className="hidden overflow-hidden rounded-cuaderno border border-tinta/15 bg-superficie shadow-sm md:block">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-tinta/25 text-[13px] font-semibold uppercase tracking-wide text-tinta/65">
-                  <th className="w-10 py-3 pl-1 text-left">Tipo</th>
-                  <th className="py-3 pl-2 pr-4 text-left">Actividad</th>
-                  <th className="whitespace-nowrap px-3 py-3 text-left">
+                <tr className="border-b border-tinta/20 bg-tinta/[0.03] text-[13px] font-semibold uppercase tracking-wide text-tinta/65">
+                  <th className="w-10 py-2.5 pl-4 text-left">Tipo</th>
+                  <th className="py-2.5 pl-2 pr-4 text-left">Actividad</th>
+                  <th className="whitespace-nowrap px-3 py-2.5 text-left">
                     Fecha/Hora entrega
                   </th>
-                  <th className="px-3 py-3 text-left">Estado</th>
-                  <th className="whitespace-nowrap px-3 py-3 text-right">Valor %</th>
-                  <th className="whitespace-nowrap py-3 pl-3 text-right">Calificación</th>
-                  <th className="w-8" aria-label="Abrir" />
+                  <th className="px-3 py-2.5 text-left">Estado</th>
+                  <th className="whitespace-nowrap px-3 py-2.5 text-right">Valor %</th>
+                  <th className="whitespace-nowrap px-3 py-2.5 text-right">
+                    Calificación
+                  </th>
+                  <th className="w-8 pr-2" aria-label="Abrir" />
                 </tr>
               </thead>
               <tbody>
@@ -213,12 +218,14 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
                 )}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-tinta/25">
+                {/* El total cierra la tarjeta con su propio fondo: es la línea
+                    que el estudiante viene a buscar. */}
+                <tr className="border-t-2 border-tinta/20 bg-tinta/[0.04]">
                   <td colSpan={4} aria-hidden="true" />
-                  <td className="whitespace-nowrap px-3 pt-4 text-right text-[15px] font-bold uppercase tracking-wide text-tinta">
-                    Nota final:
+                  <td className="whitespace-nowrap px-3 py-3 text-right text-[15px] font-bold uppercase tracking-wide text-tinta">
+                    Nota final
                   </td>
-                  <td className="whitespace-nowrap py-4 pl-3 text-right">
+                  <td className="whitespace-nowrap px-3 py-3 text-right">
                     {verNotas ? (
                       <>
                         <span
@@ -238,8 +245,8 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
                   </td>
                   <td aria-hidden="true" />
                 </tr>
-                <tr>
-                  <td colSpan={7} className="pb-1 pr-1 text-right text-sm text-tinta/65">
+                <tr className="bg-tinta/[0.04]">
+                  <td colSpan={7} className="px-4 pb-2.5 text-right text-sm text-tinta/65">
                     Evaluado hasta hoy: <b className="text-tinta/80">{pct(evaluado, 0)}</b>
                     {umbral != null && (
                       <>
@@ -258,7 +265,9 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
 
           {/* ── CELULAR ────────────────────────────────────────────────────── */}
           <div className="md:hidden">
-            <ul className="divide-y divide-tinta/10 border-y border-tinta/15">
+            {/* Misma tarjeta que en escritorio, para que no se lea como texto
+                suelto sobre el fondo. */}
+            <ul className="divide-y divide-tinta/10 overflow-hidden rounded-cuaderno border border-tinta/15 bg-superficie px-3 shadow-sm">
               {ordenadas.map((f) => (
                 <FilaMovil
                   key={f.asignacion.id}
@@ -321,22 +330,27 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
 
           {/* ── Resumen por rubro ──────────────────────────────────────────── */}
           {verNotas && porRubro.length > 0 && (
-            <section className="rounded-cuaderno border border-tinta/12 bg-tinta/[0.02] px-4 py-3.5">
-              <h3 className="mb-2.5 text-[13px] font-semibold uppercase tracking-wide text-tinta/65">
+            <section className="overflow-hidden rounded-cuaderno border border-tinta/15 bg-superficie shadow-sm">
+              <h3 className="border-b border-tinta/15 bg-tinta/[0.03] px-4 py-2.5 text-[13px] font-semibold uppercase tracking-wide text-tinta/65">
                 Resumen por rubro
               </h3>
-              <ul className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+              {/* Dos columnas en escritorio, con línea entre ellas para que se
+                  lean como tabla; los bordes de la última fila se apagan para
+                  no duplicar el borde de la tarjeta. */}
+              <ul className="divide-y divide-tinta/10 sm:grid sm:grid-cols-2 sm:divide-y-0 sm:[&>li:nth-child(odd)]:border-r sm:[&>li:nth-last-child(-n+2)]:border-b-0">
                 {porRubro.map((r) => (
                   <li
                     key={r.nombre}
-                    className="flex items-baseline justify-between gap-3"
+                    className="flex items-baseline justify-between gap-3 border-tinta/10 px-4 py-2.5 sm:border-b"
                   >
                     <span className="min-w-0 break-words text-tinta/85">
                       {r.nombre}
                       <span className="text-tinta/55"> · vale {r.valor}%</span>
                     </span>
                     <span className="shrink-0 font-semibold tabular-nums text-tinta">
-                      {pct(r.obtenido)}
+                      {/* Una raya, no un 0%, cuando todavía no hay nada
+                          calificado en ese rubro: son cosas distintas. */}
+                      {r.calificadas === 0 ? '—' : pct(r.obtenido)}
                     </span>
                   </li>
                 ))}
@@ -432,9 +446,9 @@ function FilaActividad({ fila, claseTitulo, verNotas = true }) {
     // "abrir en otra pestaña".
     <tr
       onClick={() => navegar(destino)}
-      className="group cursor-pointer border-b border-tinta/10 transition-colors hover:bg-pizarra/[0.07]"
+      className="group cursor-pointer border-b border-tinta/10 transition-colors even:bg-tinta/[0.02] hover:bg-pizarra/[0.07]"
     >
-      <td className="py-3 pl-1 align-top">
+      <td className="py-3 pl-4 align-top">
         <IconoTipo clave={tipo.clave} label={tipo.label} />
       </td>
       <td className="py-3 pl-2 pr-4 align-top">
@@ -462,7 +476,7 @@ function FilaActividad({ fila, claseTitulo, verNotas = true }) {
       <td className="whitespace-nowrap px-3 py-3 text-right align-top tabular-nums text-tinta/75">
         {fila.valor == null ? '—' : `${fila.valor}%`}
       </td>
-      <td className="whitespace-nowrap py-3 pl-3 text-right align-top">
+      <td className="whitespace-nowrap px-3 py-3 text-right align-top">
         <CeldaCalificacion fila={fila} grande verNotas={verNotas} />
       </td>
       <td className="py-3 pr-1 text-right align-top">
@@ -474,8 +488,8 @@ function FilaActividad({ fila, claseTitulo, verNotas = true }) {
 
 function FilaAsistencia({ asistencia, conteos, verNotas = true }) {
   return (
-    <tr className="border-b border-tinta/10 bg-tinta/[0.02]">
-      <td className="py-3 pl-1 align-top">
+    <tr className="border-b border-tinta/10 bg-pizarra/[0.04]">
+      <td className="py-3 pl-4 align-top">
         <IconoTipo clave="asistencia" label="Asistencia" />
       </td>
       <td className="py-3 pl-2 pr-4 align-top">
@@ -496,7 +510,7 @@ function FilaAsistencia({ asistencia, conteos, verNotas = true }) {
       <td className="whitespace-nowrap px-3 py-3 text-right align-top tabular-nums text-tinta/75">
         {asistencia.valor == null ? '—' : `${asistencia.valor}%`}
       </td>
-      <td className="whitespace-nowrap py-3 pl-3 text-right align-top">
+      <td className="whitespace-nowrap px-3 py-3 text-right align-top">
         {!verNotas ? (
           <span className="whitespace-nowrap rounded-full bg-ambar/15 px-2 py-1 text-[13px] font-medium text-ambar ring-1 ring-inset ring-ambar/30">
             Sin publicar
@@ -562,7 +576,9 @@ function FilaMovil({ fila, claseTitulo, verNotas = true }) {
 
 function FilaMovilAsistencia({ asistencia, conteos, verNotas = true }) {
   return (
-    <li className="flex items-start gap-3 py-3.5">
+    // Fondo tenue: no es una actividad más, se calcula sola. Mismo trato que
+    // en la tabla de escritorio.
+    <li className="-mx-3 flex items-start gap-3 bg-pizarra/[0.04] px-3 py-3.5">
       <span className="mt-0.5">
         <IconoTipo clave="asistencia" label="Asistencia" />
       </span>

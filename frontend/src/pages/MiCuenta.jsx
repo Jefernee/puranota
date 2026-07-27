@@ -17,33 +17,51 @@ export default function MiCuenta() {
   const inicial = (perfil?.nombre?.trim()?.[0] || '?').toUpperCase()
 
   return (
-    <Layout ancho="normal">
-      {/* Encabezado: Volver + avatar + nombre en la misma línea; datos debajo */}
-      <div className="mb-6 border-b border-tinta/10 pb-5">
-        <div className="flex flex-wrap items-center gap-3">
-          <Volver to="/" atras>
-            Volver
-          </Volver>
-          <span
-            className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-bold text-papel shadow-sm ${
-              esDocente ? 'bg-guaria' : 'bg-pizarra'
-            }`}
-          >
-            {inicial}
-          </span>
-          <h1 className="text-2xl font-bold leading-tight sm:text-3xl">
+    <Layout
+      ancho="normal"
+      titulo="Mi cuenta"
+      volver={
+        <Volver to="/" atras>
+          Volver
+        </Volver>
+      }
+    >
+      <h1 className="sr-only">Mi cuenta</h1>
+
+      {/* Ficha de identidad: quién sos, en una tarjeta como el resto de la
+          pantalla. Antes era texto suelto sobre el fondo y se leía plano.
+          En celular el volver se queda acá; en escritorio vive en la barra. */}
+      <div className="mb-5 lg:hidden">
+        <Volver to="/" atras>
+          Volver
+        </Volver>
+      </div>
+
+      <div className="tarjeta-cuaderno mb-5 flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 sm:px-5 sm:pl-7">
+        <span
+          className={`grid h-14 w-14 shrink-0 place-items-center rounded-full text-xl font-bold text-papel shadow-sm ${
+            esDocente ? 'bg-guaria' : 'bg-pizarra'
+          }`}
+        >
+          {inicial}
+        </span>
+        <div className="min-w-0">
+          <p className="break-words text-xl font-bold leading-tight text-tinta">
             {perfil?.nombre || 'Mi cuenta'}
-          </h1>
-          <span
-            className={`rounded-full border px-3 py-1 text-sm font-medium ${
-              esDocente
-                ? 'border-tinta/15 bg-tinta/[0.04] text-tinta/80'
-                : 'border-pizarra/20 bg-pizarra/10 text-pizarra'
-            }`}
-          >
-            {esDocente ? 'Docente' : 'Estudiante'}
-          </span>
+          </p>
+          {perfil?.correo && (
+            <p className="mt-0.5 break-all text-sm text-tinta/65">{perfil.correo}</p>
+          )}
         </div>
+        <span
+          className={`ml-auto shrink-0 rounded-full border px-3 py-1 text-sm font-medium ${
+            esDocente
+              ? 'border-guaria/25 bg-guaria/10 text-guaria'
+              : 'border-pizarra/20 bg-pizarra/10 text-pizarra'
+          }`}
+        >
+          {esDocente ? 'Docente' : 'Estudiante'}
+        </span>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-3 lg:items-start">
@@ -106,7 +124,7 @@ function DatosPersonales({ perfil }) {
       className="tarjeta-cuaderno space-y-3 px-4 py-4 sm:px-5 sm:pl-7"
       noValidate
     >
-      <p className="font-display text-base font-semibold text-tinta">
+      <p className="-mx-4 border-b border-tinta/10 px-4 pb-2.5 font-display text-base font-semibold text-tinta sm:-mx-5 sm:-ml-7 sm:px-5 sm:pl-7">
         Datos personales
       </p>
       <div>
@@ -204,7 +222,7 @@ function CambiarClave() {
 
   return (
     <form onSubmit={handleSubmit} className="tarjeta-cuaderno space-y-3 px-4 py-4 sm:px-5 sm:pl-7" noValidate>
-      <p className="font-display text-base font-semibold text-tinta">
+      <p className="-mx-4 border-b border-tinta/10 px-4 pb-2.5 font-display text-base font-semibold text-tinta sm:-mx-5 sm:-ml-7 sm:px-5 sm:pl-7">
         Cambiar contraseña
       </p>
       <div>
@@ -271,7 +289,7 @@ function PreguntaSeguridad({ perfil }) {
 
   return (
     <form onSubmit={handleSubmit} className="tarjeta-cuaderno space-y-3 px-4 py-4 sm:px-5 sm:pl-7" noValidate>
-      <p className="font-display text-base font-semibold text-tinta">
+      <p className="-mx-4 border-b border-tinta/10 px-4 pb-2.5 font-display text-base font-semibold text-tinta sm:-mx-5 sm:-ml-7 sm:px-5 sm:pl-7">
         Pregunta de seguridad
       </p>
       <p className="text-sm text-tinta/70">

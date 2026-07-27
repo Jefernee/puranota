@@ -76,7 +76,7 @@ export default function Layout({
             <p
               aria-hidden="true"
               title={subtitulo ? `${titulo} · ${subtitulo}` : titulo}
-              className="hidden min-w-0 flex-1 truncate px-4 text-center text-base font-bold text-tinta lg:block"
+              className="hidden min-w-0 flex-1 truncate px-4 text-center text-lg font-bold text-tinta lg:block"
             >
               {titulo}
               {/* El subtítulo solo desde 1280: en 1024 obligaba a recortar el
