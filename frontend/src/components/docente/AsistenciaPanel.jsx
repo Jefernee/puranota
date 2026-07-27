@@ -5,6 +5,7 @@ import {
   listarAsistenciaFecha,
   listarAsistenciaGrupo,
   marcarAsistencia,
+  borrarAsistencia,
 } from '../../services/asistencia.service'
 import {
   listarEstudiantes,
@@ -48,6 +49,15 @@ const DIAS = [
   { n: 5, label: 'Viernes' },
 ]
 
+// Color de cada estado en el conteo del día, el mismo del botón que lo marca.
+const COLOR_CONTEO = {
+  presente: 'text-pizarra',
+  ausente: 'text-margen',
+  tardia: 'text-ambar',
+  fuga: 'text-guaria',
+  justificada: 'text-tinta/70',
+}
+
 function hoyLocal() {
   const d = new Date()
   const pad = (n) => String(n).padStart(2, '0')
@@ -81,6 +91,19 @@ export default function AsistenciaPanel({ grupo: grupoInicial }) {
   const [cargandoResumen, setCargandoResumen] = useState(false)
   const [modalLecciones, setModalLecciones] = useState(false)
 
+  // ¿Ya dijo cuántas lecciones da por día? Si no, se le invita una vez. El
+  // "Ahora no" se recuerda por grupo para no volver a insistir.
+  const sinConfigurar =
+    Object.keys(grupo.lecciones_por_dia || {}).length === 0
+  const claveAviso = `pn-lecciones-aviso-${grupoId}`
+  const [avisoOculto, setAvisoOculto] = useState(
+    () => localStorage.getItem(claveAviso) === '1',
+  )
+  function cerrarAviso() {
+    localStorage.setItem(claveAviso, '1')
+    setAvisoOculto(true)
+  }
+
   async function cargar() {
     setCargando(true)
     setError('')
@@ -110,28 +133,70 @@ export default function AsistenciaPanel({ grupo: grupoInicial }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grupoId, fecha])
 
+  /**
+   * Marca un estado, o lo QUITA si ya estaba puesto (tocar dos veces desmarca).
+   *
+   * Poder desmarcar importa: si el docente toca "Ausente" por error, sin esto
+   * la única salida sería dejar puesto algo que no pasó. Y un día sin registro
+   * no es lo mismo que un día presente: no cuenta como lección impartida, así
+   * que no infla ni desinfla el porcentaje de asistencia.
+   */
   async function marcar(estudianteId, estado, perdidas = null) {
     setError('')
     setGuardandoId(estudianteId)
     const previo = registros[estudianteId]
-    const nuevo = {
-      estado,
-      // Al marcar fuga sin decir cuántas, se asume la última lección del bloque.
-      perdidas: estado === 'fuga' ? perdidas || previo?.perdidas || 1 : null,
-    }
-    setRegistros((prev) => ({ ...prev, [estudianteId]: nuevo })) // optimista
+    // Mismo botón otra vez = quitar la marca. Cambiar el número de lecciones de
+    // una fuga no desmarca: ahí viene `perdidas`.
+    const quitar = previo?.estado === estado && perdidas == null
+
+    setRegistros((prev) => {
+      const copia = { ...prev }
+      if (quitar) delete copia[estudianteId]
+      else
+        copia[estudianteId] = {
+          estado,
+          perdidas: estado === 'fuga' ? perdidas || previo?.perdidas || 1 : null,
+        }
+      return copia
+    })
+
     try {
-      await marcarAsistencia(grupoId, estudianteId, fecha, estado, nuevo.perdidas)
+      if (quitar) await borrarAsistencia(grupoId, estudianteId, fecha)
+      else
+        await marcarAsistencia(
+          grupoId,
+          estudianteId,
+          fecha,
+          estado,
+          estado === 'fuga' ? perdidas || previo?.perdidas || 1 : null,
+        )
     } catch (e) {
-      setRegistros((prev) => ({ ...prev, [estudianteId]: previo })) // revertir
+      // Revertir al estado anterior exacto (incluido "sin marcar").
+      setRegistros((prev) => {
+        const copia = { ...prev }
+        if (previo) copia[estudianteId] = previo
+        else delete copia[estudianteId]
+        return copia
+      })
       setError(e?.message || 'No se pudo guardar.')
     } finally {
       setGuardandoId(null)
     }
   }
 
-  // Cuántas lecciones tiene el día que se está pasando.
+  // Cuántas lecciones vale el día que se está pasando. Un día sin configurar
+  // —un sábado de reposición, por ejemplo— vale 1: se registra igual y cuenta
+  // para el periodo, sin ningún trámite extra.
   const leccionesHoy = Math.max(1, Number(peso(fecha)) || 1)
+
+  // El nombre del día, para que se vea de inmediato sobre qué se está pasando
+  // lista sin tener que descifrar la fecha.
+  const nombreDia = useMemo(() => {
+    const [y, m, d] = fecha.split('-').map(Number)
+    return ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'][
+      new Date(y, m - 1, d).getDay()
+    ]
+  }, [fecha])
 
   // Resumen corto para el botón: "9 por semana" o "sin configurar".
   const resumenLecciones = useMemo(() => {
@@ -223,6 +288,54 @@ export default function AsistenciaPanel({ grupo: grupoInicial }) {
           </button>
         ))}
 
+        {/* La fecha y su contexto van acá, a la par de las pestañas: eran
+            cuatro renglones apilados antes de llegar a la lista, que es lo que
+            uno viene a usar. En el resumen no aplica —ahí manda el selector de
+            periodo—, por eso solo aparecen en 'lista'. */}
+        {vista === 'lista' && (
+          <>
+            <label htmlFor="fecha" className="sr-only">
+              Fecha del pase de lista
+            </label>
+            <input
+              id="fecha"
+              type="date"
+              className="campo ml-1 w-auto min-w-[164px] shrink-0 py-2"
+              value={fecha}
+              max={hoyLocal()}
+              onChange={(e) => setFecha(e.target.value || hoyLocal())}
+            />
+            <p className="text-sm text-tinta/65">
+              <b className="capitalize text-tinta/85">{nombreDia}</b> ·{' '}
+              {etiquetaPeriodo(periodoDeFecha(grupo, fecha))} ·{' '}
+              <b className="text-tinta/85">
+                {leccionesHoy} {leccionesHoy === 1 ? 'lección' : 'lecciones'}
+              </b>
+            </p>
+            {!cargando && estudiantes.length > 0 && (
+              // Separado del contexto del día por una línea tenue: pegados,
+              // "1 lección" y "1 presente" se leían como una sola frase.
+              <p className="border-l border-tinta/15 pl-3 text-sm text-tinta/60">
+                {/* Solo lo que hay: cinco ceros no dicen nada y ocupan la
+                    línea entera. Cada estado con su color, el mismo del botón. */}
+                {ESTADOS.filter((e) => conteoDia[e.id] > 0).map((e, i) => (
+                  <span key={e.id}>
+                    {i > 0 && ' · '}
+                    <b className={COLOR_CONTEO[e.id]}>{conteoDia[e.id]}</b>{' '}
+                    {e.label.toLowerCase()}
+                  </span>
+                ))}
+                {conteoDia.sin > 0 && (
+                  <>
+                    {ESTADOS.some((e) => conteoDia[e.id] > 0) && ' · '}
+                    {conteoDia.sin} sin marcar
+                  </>
+                )}
+              </p>
+            )}
+          </>
+        )}
+
         {/* Configuración del año, no del día: va como acción al lado de las
             pestañas y se abre en modal, para no ocupar espacio permanente
             encima del pase de lista. */}
@@ -310,40 +423,33 @@ export default function AsistenciaPanel({ grupo: grupoInicial }) {
         </>
       ) : (
         <>
-          {/* Pase de lista: fecha + conteo + lista de estudiantes */}
-          <label htmlFor="fecha" className="block">
-            <span className="mb-1 block text-sm text-tinta/60">Fecha</span>
-            <input
-              id="fecha"
-              type="date"
-              className="campo w-full max-w-[200px]"
-              value={fecha}
-              max={hoyLocal()}
-              onChange={(e) => setFecha(e.target.value || hoyLocal())}
-            />
-          </label>
-
-          {/* A qué periodo suma esta fecha, y cuántas lecciones vale. Sin esto,
-              uno pasa lista un 25 de julio, abre Notas en el I Periodo y cree
-              que no se guardó nada. */}
-          <p className="text-sm text-tinta/65">
-            Esta fecha cuenta para el{' '}
-            <b className="text-tinta/85">{etiquetaPeriodo(periodoDeFecha(grupo, fecha))}</b>
-            {' · '}
-            <b className="text-tinta/85">
-              {leccionesHoy} {leccionesHoy === 1 ? 'lección' : 'lecciones'}
-            </b>
-            .
-          </p>
-
-          {!cargando && estudiantes.length > 0 && (
-            <p className="text-sm text-tinta/60">
-              {conteoDia.presente} presentes · {conteoDia.ausente} ausentes ·{' '}
-              {conteoDia.tardia} tardías ·{' '}
-              {conteoDia.fuga} {conteoDia.fuga === 1 ? 'fuga' : 'fugas'} ·{' '}
-              {conteoDia.justificada} justificadas
-              {conteoDia.sin > 0 && ` · ${conteoDia.sin} sin marcar`}
-            </p>
+          {/* Invitación de la primera vez. No bloquea: si el docente la ignora,
+              todo sigue funcionando con un día = una lección. Se puede cerrar y
+              no vuelve a aparecer en ese grupo. */}
+          {sinConfigurar && !avisoOculto && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-cuaderno border border-pizarra/25 bg-pizarra/[0.06] px-4 py-3">
+              <p className="min-w-0 text-[15px] text-tinta/80">
+                <b className="text-tinta">¿Cuántas lecciones das cada día?</b> El MEP
+                cuenta la asistencia por lección (Art. 37). Mientras no lo digas,
+                cada día que pasés lista cuenta como <b>una</b>.
+              </p>
+              <div className="flex shrink-0 gap-2">
+                <button
+                  type="button"
+                  onClick={cerrarAviso}
+                  className="btn-secundario"
+                >
+                  Ahora no
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalLecciones(true)}
+                  className="btn-primario"
+                >
+                  Configurar
+                </button>
+              </div>
+            </div>
           )}
 
           <Alerta tipo="error">{error}</Alerta>
