@@ -95,7 +95,7 @@ export default function GaleriaArchivos({ archivos = [] }) {
                 </span>
               ) : (
                 <span
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-tinta/12 bg-tinta/[0.04] text-[11px] font-bold text-tinta/70 transition-colors group-hover:border-pizarra/30 group-hover:text-pizarra"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-tinta/12 bg-tinta/[0.04] text-[13px] font-bold text-tinta/70 transition-colors group-hover:border-pizarra/30 group-hover:text-pizarra"
                   aria-hidden="true"
                 >
                   {extension(a)}

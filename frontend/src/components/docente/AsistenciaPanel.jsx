@@ -6,6 +6,7 @@ import {
   marcarAsistencia,
 } from '../../services/asistencia.service'
 import { listarEstudiantes } from '../../services/grupos.service'
+import { etiquetaPeriodo, periodoDeFecha } from '../../lib/periodos'
 
 // Estados posibles con su etiqueta corta y estilos de botón.
 const ESTADOS = [
@@ -124,7 +125,7 @@ export default function AsistenciaPanel({ grupo }) {
             key={v.id}
             type="button"
             onClick={() => cambiarVista(v.id)}
-            className={`rounded-cuaderno border px-4 py-2 text-sm font-semibold shadow-sm transition-colors ${
+            className={`min-h-[40px] rounded-cuaderno border px-4 py-2 text-sm font-semibold shadow-sm transition-colors ${
               vista === v.id
                 ? 'border-pizarra bg-pizarra text-papel'
                 : 'border-tinta/15 bg-superficie text-tinta/70 hover:border-pizarra/40 hover:text-pizarra'
@@ -167,6 +168,13 @@ export default function AsistenciaPanel({ grupo }) {
             />
           </label>
 
+          {/* A qué periodo suma esta fecha. Sin esto, uno pasa lista un 25 de
+              julio, abre Notas en el I Periodo y cree que no se guardó nada. */}
+          <p className="text-sm text-tinta/65">
+            Esta fecha cuenta para el{' '}
+            <b className="text-tinta/85">{etiquetaPeriodo(periodoDeFecha(grupo, fecha))}</b>.
+          </p>
+
           {!cargando && estudiantes.length > 0 && (
             <p className="text-sm text-tinta/60">
               {conteoDia.presente} presentes · {conteoDia.ausente} ausentes ·{' '}
@@ -203,7 +211,7 @@ export default function AsistenciaPanel({ grupo }) {
                             key={e.id}
                             onClick={() => marcar(m.estudiante.id, e.id)}
                             disabled={guardandoId === m.estudiante.id}
-                            className={`rounded-cuaderno px-3 py-1.5 text-sm font-medium transition-colors ${
+                            className={`min-h-[40px] rounded-cuaderno px-3 py-1.5 text-sm font-medium transition-colors ${
                               sel ? e.activo : e.idle
                             }`}
                             title={e.label}

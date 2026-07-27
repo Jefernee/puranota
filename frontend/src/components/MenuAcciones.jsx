@@ -82,7 +82,7 @@ export default function MenuAcciones({
         onClick={() => setAbierto((v) => !v)}
         className={
           triggerClassName ||
-          `grid h-8 w-8 place-items-center rounded-full transition-colors ${
+          `grid h-10 w-10 place-items-center rounded-full transition-colors ${
             abierto ? 'bg-tinta/10 text-tinta' : 'text-tinta/60 hover:bg-tinta/10 hover:text-tinta'
           }`
         }

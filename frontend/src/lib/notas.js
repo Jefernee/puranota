@@ -78,6 +78,25 @@ export function redondearAnual(n) {
   return Math.floor(n + 0.5)
 }
 
+/**
+ * ¿Cómo va el estudiante contra el mínimo de aprobación? Devuelve
+ * 'aprobado' | 'perdido' | 'en_juego' | null (si no hay umbral o no hay nota).
+ *
+ * Existe para que el color no mienta. Antes se pintaba de rojo toda nota por
+ * debajo del mínimo, y a mitad de periodo eso es falso: con un 55% evaluado
+ * nadie llega a 65 todavía, así que el grupo entero se veía reprobando.
+ *
+ *   aprobado = ya alcanzó el mínimo, y como la nota solo sube, no lo pierde
+ *   perdido  = ni sacando todo lo que falta llega
+ *   en_juego = todavía se define
+ */
+export function estadoAprobacion(notaFinal, evaluado, umbral) {
+  if (umbral == null || notaFinal == null) return null
+  if (notaFinal >= umbral) return 'aprobado'
+  const porEvaluar = Math.max(0, 100 - (Number(evaluado) || 0))
+  return notaFinal + porEvaluar < umbral ? 'perdido' : 'en_juego'
+}
+
 /** ¿Este rubro es el de asistencia (se calcula solo)? */
 export function esRubroAsistencia(r) {
   return (
@@ -200,16 +219,24 @@ export function calcularRegistro(rubros, asignaciones, entregaDe, conteos = null
     hayAlgo = true
   }
 
-  // Subtotal por rubro, para el registro del MEP.
+  // Subtotal por rubro. Es lo que se muestra como columna en el registro del
+  // docente: "Trabajo cotidiano 21,78%", no una columna por cada actividad.
+  //
+  // Van también los conteos, porque `obtenido: 0` es ambiguo: puede ser que el
+  // estudiante sacara cero, o que todavía no le hayan calificado nada. Sin
+  // distinguirlos, la pantalla mostraría un 0% donde corresponde una raya.
   const porRubro = normales.map((r) => {
     const nombre = (r.nombre || '').trim()
-    const obtenido = filas
-      .filter((f) => !f.noCuenta && (f.asignacion.rubro || '').trim() === nombre)
-      .reduce((s, f) => s + (f.calificacion || 0), 0)
+    const suyas = filas.filter(
+      (f) => !f.noCuenta && (f.asignacion.rubro || '').trim() === nombre,
+    )
+    const conNota = suyas.filter((f) => f.calificacion != null)
     return {
       nombre: r.nombre,
       valor: Number(r.porcentaje) || 0,
-      obtenido,
+      obtenido: conNota.reduce((s, f) => s + f.calificacion, 0),
+      calificadas: conNota.length,
+      total: suyas.length,
       esAsistencia: false,
     }
   })
@@ -218,6 +245,8 @@ export function calcularRegistro(rubros, asignaciones, entregaDe, conteos = null
       nombre: rubroAsistencia.nombre || 'Asistencia',
       valor: Number(rubroAsistencia.porcentaje) || 0,
       obtenido: asistencia?.calificacion || 0,
+      calificadas: asistencia?.calificacion != null ? 1 : 0,
+      total: 1,
       esAsistencia: true,
     })
   }

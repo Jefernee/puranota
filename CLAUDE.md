@@ -335,6 +335,8 @@ Todas las tablas están en el esquema `public` y **todas tienen RLS activo**.
 `id`, `docente_id`, `nombre`, `materia`, `nivel`, `anio`, `codigo_acceso` (único,
 6 caracteres, autogenerado), `requiere_aprobacion`, `activo`, `creado_en`,
 `periodo`, `rubros` jsonb,
+**(+)** `notas_ocultas` jsonb (lista de periodos cuyas calificaciones el docente
+todavía no muestra, ej. `["II"]`; vacío = publicado),
 **(+)** `especialidad`, **(+)** `mep_modalidad`, **(+)** `periodos_fechas` jsonb,
 **(+)** `penalizacion_tardia` y **(+)** `anuncio` — **columnas muertas**: existen en
 la base pero **ningún código las lee ni las escribe** (la penalización quedó por
@@ -496,6 +498,11 @@ alter table public.asignaciones
   check (tipo in ('entrega','prueba','proyecto','foro'));
 update public.asignaciones set tipo = 'prueba'
  where requiere_entrega = false and tipo = 'entrega';
+
+-- 2026-07-26 — Publicar las notas cuando el docente quiera (docs/PLAN.md §3.9).
+-- Vacío = publicado, así los grupos que ya existían no cambian de comportamiento.
+alter table public.grupos
+  add column if not exists notas_ocultas jsonb not null default '[]'::jsonb;
 
 -- 2026-07-26 — Cerrar el adjuntar a una entrega ya calificada.
 -- El `using` de la política no cubre los INSERT; hacía falta repetir la

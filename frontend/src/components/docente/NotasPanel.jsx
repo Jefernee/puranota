@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import Alerta from '../Alerta'
-import { periodosDeGrupo, etiquetaPeriodo } from '../../lib/periodos'
+import { periodosDeGrupo, etiquetaPeriodo, periodoDeFecha } from '../../lib/periodos'
 import {
   rubrosPorPeriodo,
   rangoPeriodo,
   listarEstudiantes,
+  notasPublicadas,
+  definirNotasPublicadas,
 } from '../../services/grupos.service'
 import { listarAsignaciones } from '../../services/asignaciones.service'
 import { listarEntregasDeAsignaciones } from '../../services/entregas.service'
@@ -13,27 +15,57 @@ import {
   calcularRegistro,
   contarAsistencia,
   diasRegistrados,
+  estadoAprobacion,
   pct,
 } from '../../lib/notas'
 import { umbralDeModalidad } from '../../lib/mep'
 
 // REGISTRO DE CALIFICACIONES del grupo (ver docs/PLAN.md §3.6).
-// Estudiantes en filas, actividades en columnas. Cada celda es la CALIFICACIÓN
-// de esa actividad expresada en porcentaje del periodo; la columna NOTA es la
-// suma de la fila. Props: grupo.
+//
+// Estudiantes en filas y **rubros** en columnas: "Trabajo cotidiano 21,78%", no
+// una columna por cada actividad. Con siete actividades la tabla ya no cabía y
+// los títulos había que recortarlos; con veinte sería ilegible. Además, para
+// leer el registro uno quiere el subtotal del rubro —que es lo que pide el
+// MEP—, no cada tarea suelta.
+//
+// El detalle no se pierde: al tocar una fila se despliegan las actividades de
+// ese estudiante, una por una, con su Valor % y su calificación.
+//
+// La columna NOTA sigue siendo la suma de la fila, que es la regla que hace
+// verificable el registro. Props: grupo.
 
-export default function NotasPanel({ grupo }) {
+export default function NotasPanel({ grupo: grupoInicial }) {
+  const [grupo, setGrupo] = useState(grupoInicial)
   const periodos = periodosDeGrupo(grupo)
   const rubrosPP = rubrosPorPeriodo(grupo)
   const umbral = grupo.mep_modalidad ? umbralDeModalidad(grupo.mep_modalidad) : null
 
-  const [periodo, setPeriodo] = useState(periodos[0] || 'I')
+  // Abre en el periodo que corresponde a HOY, no siempre en el primero: si el
+  // docente pasa lista un 25 de julio y el registro abre en el I Periodo, no ve
+  // reflejada esa asistencia y parece que el sistema no guardó nada.
+  const [periodo, setPeriodo] = useState(() => periodoDeFecha(grupo))
+  const [abierto, setAbierto] = useState(null) // id del estudiante desplegado
   const [estudiantes, setEstudiantes] = useState([])
   const [asignaciones, setAsignaciones] = useState([])
   const [entregaMap, setEntregaMap] = useState(new Map())
   const [asisRows, setAsisRows] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
+  const [cambiandoVisibilidad, setCambiandoVisibilidad] = useState(false)
+
+  const publicadas = notasPublicadas(grupo, periodo)
+
+  async function alternarPublicacion() {
+    setCambiandoVisibilidad(true)
+    setError('')
+    try {
+      setGrupo(await definirNotasPublicadas(grupo, periodo, !publicadas))
+    } catch (e) {
+      setError(e?.message || 'No se pudo cambiar la visibilidad.')
+    } finally {
+      setCambiandoVisibilidad(false)
+    }
+  }
 
   useEffect(() => {
     let vivo = true
@@ -101,23 +133,29 @@ export default function NotasPanel({ grupo }) {
     [estudiantes, rubros, columnas, entregaMap, asisRows, periodo],
   )
 
-  const hayAsistencia = filas.some((f) => f.asistencia)
   const avisos = filas[0]?.avisos || { rubro: [], sinValor: [] }
+
+  // Los rubros del periodo son las columnas. Se leen del primer estudiante:
+  // `calcularRegistro` los devuelve en el mismo orden para todos.
+  const columnasRubro = filas[0]?.porRubro || []
 
   // Promedio del grupo por columna y total.
   const promedio = (valores) => {
     const v = valores.filter((x) => x != null)
     return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null
   }
-  const promCol = columnas.map((a, i) =>
-    promedio(filas.map((f) => f.filas[i]?.calificacion)),
+  const promRubro = columnasRubro.map((_, i) =>
+    promedio(filas.map((f) => (f.porRubro[i]?.calificadas ? f.porRubro[i].obtenido : null))),
   )
-  const promAsis = promedio(filas.map((f) => f.asistencia?.calificacion))
   const promTotal = promedio(filas.map((f) => f.notaFinal))
   const evaluado = filas.length ? Math.max(...filas.map((f) => f.evaluado)) : 0
 
+  // El color informa o no está (§5.5.3): verde solo cuando ya aprobó, rojo solo
+  // cuando ya no le alcanza. A mitad de periodo, tinta.
   const colorNota = (v) =>
-    umbral == null || v == null ? 'text-tinta' : v >= umbral ? 'text-pizarra' : 'text-margen'
+    ({ aprobado: 'text-pizarra', perdido: 'text-margen' })[
+      estadoAprobacion(v, evaluado, umbral)
+    ] || 'text-tinta'
 
   return (
     <div className="space-y-4">
@@ -141,9 +179,41 @@ export default function NotasPanel({ grupo }) {
                 · Mínimo para aprobar <b className="text-tinta/80">{umbral}</b>
               </>
             )}
+            {!publicadas && (
+              <>
+                {' '}
+                · <b className="text-ambar">notas ocultas</b>
+              </>
+            )}
           </p>
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {/* Publicar o no las notas del periodo: el docente suele querer
+              terminar de calificar a todo el grupo antes de que nadie vea la
+              suya. Va acá, junto al selector, porque se decide por periodo. */}
+          <button
+            type="button"
+            onClick={alternarPublicacion}
+            disabled={cambiandoVisibilidad}
+            title={
+              publicadas
+                ? 'Los estudiantes ven su calificación de este periodo'
+                : 'Los estudiantes ven sus entregas, pero no su calificación'
+            }
+            className={`mr-1 inline-flex min-h-[44px] items-center gap-1.5 rounded-cuaderno border px-3 text-[15px] font-semibold shadow-sm transition-colors disabled:opacity-50 ${
+              publicadas
+                ? 'border-tinta/15 bg-superficie text-tinta/70 hover:border-pizarra/40 hover:text-pizarra'
+                : 'border-ambar/40 bg-ambar/10 text-ambar hover:bg-ambar/15'
+            }`}
+          >
+            <Ojo abierto={publicadas} />
+            {cambiandoVisibilidad
+              ? 'Guardando…'
+              : publicadas
+                ? 'Ocultar notas'
+                : 'Mostrar notas'}
+          </button>
+
           {periodos.map((p) => (
             <button
               key={p}
@@ -191,38 +261,29 @@ export default function NotasPanel({ grupo }) {
         </Alerta>
       ) : estudiantes.length === 0 ? (
         <p className="text-sm text-tinta/60">No hay estudiantes activos.</p>
-      ) : columnas.length === 0 && !hayAsistencia ? (
+      ) : columnasRubro.length === 0 ? (
         <p className="text-sm text-tinta/60">
           No hay actividades en el {etiquetaPeriodo(periodo)} todavía.
         </p>
       ) : (
         <>
-          {/* ── ESCRITORIO: registro completo, con la columna Estudiante fija ── */}
+          {/* ── ESCRITORIO: una columna por RUBRO. Tocá una fila para ver el
+                detalle de las actividades de ese estudiante. ─────────────── */}
           <div className="hidden overflow-x-auto rounded-cuaderno border border-tinta/15 bg-superficie shadow-sm md:block">
             <table className="w-full text-[15px]">
               <thead>
                 <tr className="border-b border-tinta/25 text-[13px] uppercase tracking-wide text-tinta/65">
-                  <th className="sticky left-0 z-10 bg-superficie px-4 py-2.5 text-left font-semibold">
-                    Estudiante
-                  </th>
-                  {columnas.map((a) => (
-                    <th key={a.id} className="px-3 py-2.5 text-center font-semibold">
-                      <span className="block max-w-[9rem] truncate" title={a.titulo}>
-                        {a.titulo}
-                      </span>
+                  <th className="px-4 py-2.5 text-left font-semibold">Estudiante</th>
+                  {columnasRubro.map((r) => (
+                    <th key={r.nombre} className="px-3 py-2.5 text-center font-semibold">
+                      {/* Sin recortar: el nombre del rubro se ve completo, en
+                          varias líneas si hace falta. */}
+                      <span className="block">{r.nombre}</span>
                       <span className="block text-[13px] font-normal normal-case text-tinta/60">
-                        {a.porcentaje == null ? 'sin %' : `${a.porcentaje}%`}
+                        {r.valor}%
                       </span>
                     </th>
                   ))}
-                  {hayAsistencia && (
-                    <th className="px-3 py-2.5 text-center font-semibold">
-                      ✓ Asistencia
-                      <span className="block text-[13px] font-normal normal-case text-tinta/60">
-                        {filas[0]?.asistencia?.valor ?? 0}%
-                      </span>
-                    </th>
-                  )}
                   <th className="px-4 py-2.5 text-center font-semibold">
                     Nota
                     <span className="block text-[13px] font-normal normal-case text-tinta/60">
@@ -232,61 +293,72 @@ export default function NotasPanel({ grupo }) {
                 </tr>
               </thead>
               <tbody>
-                {filas.map((f) => (
-                  <tr
-                    key={f.estudiante.id}
-                    className="border-t border-tinta/10 even:bg-tinta/[0.02]"
-                  >
-                    <td className="sticky left-0 z-10 max-w-[14rem] truncate bg-superficie px-4 py-2 text-tinta even:bg-tinta/[0.02]">
-                      {f.estudiante.nombre || f.estudiante.correo}
-                    </td>
-                    {f.filas.map((celda, i) => (
-                      <td
-                        key={columnas[i].id}
-                        className="whitespace-nowrap px-3 py-2 text-center tabular-nums text-tinta/80"
+                {filas.map((f) => {
+                  const desplegado = abierto === f.estudiante.id
+                  return (
+                    <Fragment key={f.estudiante.id}>
+                      <tr
+                        onClick={() => setAbierto(desplegado ? null : f.estudiante.id)}
+                        className="cursor-pointer border-t border-tinta/10 even:bg-tinta/[0.02] hover:bg-pizarra/[0.06]"
                       >
-                        <Celda fila={celda} />
-                      </td>
-                    ))}
-                    {hayAsistencia && (
-                      <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums text-tinta/80">
-                        {f.asistencia?.calificacion == null ? (
-                          <span className="text-tinta/35">—</span>
-                        ) : (
-                          pct(f.asistencia.calificacion)
-                        )}
-                      </td>
-                    )}
-                    <td
-                      className={`whitespace-nowrap px-4 py-2 text-center font-bold tabular-nums ${colorNota(f.notaFinal)}`}
-                    >
-                      {f.notaFinal == null ? (
-                        <span className="text-tinta/35">—</span>
-                      ) : (
-                        pct(f.notaFinal)
+                        <td className="px-4 py-2 text-tinta">
+                          <span className="flex items-start gap-2">
+                            <span
+                              className={`mt-0.5 shrink-0 text-tinta/40 transition-transform ${desplegado ? 'rotate-90' : ''}`}
+                              aria-hidden="true"
+                            >
+                              ›
+                            </span>
+                            <span className="break-words">
+                              {f.estudiante.nombre || f.estudiante.correo}
+                            </span>
+                          </span>
+                        </td>
+                        {f.porRubro.map((r) => (
+                          <td
+                            key={r.nombre}
+                            className="whitespace-nowrap px-3 py-2 text-center tabular-nums text-tinta/80"
+                          >
+                            {r.calificadas === 0 ? (
+                              <span className="text-tinta/35">—</span>
+                            ) : (
+                              pct(r.obtenido)
+                            )}
+                          </td>
+                        ))}
+                        <td
+                          className={`whitespace-nowrap px-4 py-2 text-center font-bold tabular-nums ${colorNota(f.notaFinal)}`}
+                        >
+                          {f.notaFinal == null ? (
+                            <span className="text-tinta/35">—</span>
+                          ) : (
+                            pct(f.notaFinal)
+                          )}
+                        </td>
+                      </tr>
+
+                      {desplegado && (
+                        <tr className="border-t border-tinta/10 bg-pizarra/[0.04]">
+                          <td colSpan={columnasRubro.length + 2} className="px-4 py-3">
+                            <Detalle registro={f} columnas={columnas} />
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                  </tr>
-                ))}
+                    </Fragment>
+                  )
+                })}
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-tinta/20 bg-tinta/[0.04] font-semibold">
-                  <td className="sticky left-0 z-10 bg-tinta/[0.04] px-4 py-2 text-tinta">
-                    Promedio del grupo
-                  </td>
-                  {promCol.map((p, i) => (
+                  <td className="px-4 py-2 text-tinta">Promedio del grupo</td>
+                  {promRubro.map((p, i) => (
                     <td
-                      key={columnas[i].id}
+                      key={columnasRubro[i].nombre}
                       className="whitespace-nowrap px-3 py-2 text-center tabular-nums text-tinta/70"
                     >
                       {p == null ? '—' : pct(p)}
                     </td>
                   ))}
-                  {hayAsistencia && (
-                    <td className="whitespace-nowrap px-3 py-2 text-center tabular-nums text-tinta/70">
-                      {promAsis == null ? '—' : pct(promAsis)}
-                    </td>
-                  )}
                   <td className="whitespace-nowrap px-4 py-2 text-center tabular-nums text-tinta">
                     {promTotal == null ? '—' : pct(promTotal)}
                   </td>
@@ -318,38 +390,9 @@ export default function NotasPanel({ grupo }) {
                       {f.notaFinal == null ? '—' : pct(f.notaFinal)}
                     </span>
                   </summary>
-                  <ul className="mb-3 ml-6 space-y-1.5 border-l border-tinta/12 pl-3">
-                    {f.filas.map((celda, i) => (
-                      <li
-                        key={columnas[i].id}
-                        className="flex items-baseline justify-between gap-3 text-[15px]"
-                      >
-                        <span className="min-w-0 break-words text-tinta/75">
-                          {columnas[i].titulo}
-                          <span className="text-tinta/50">
-                            {' '}
-                            · {columnas[i].porcentaje ?? '—'}%
-                          </span>
-                        </span>
-                        <span className="shrink-0 tabular-nums">
-                          <Celda fila={celda} />
-                        </span>
-                      </li>
-                    ))}
-                    {f.asistencia && (
-                      <li className="flex items-baseline justify-between gap-3 text-[15px]">
-                        <span className="text-tinta/75">
-                          Asistencia
-                          <span className="text-tinta/50"> · {f.asistencia.valor}%</span>
-                        </span>
-                        <span className="shrink-0 tabular-nums text-tinta/80">
-                          {f.asistencia.calificacion == null
-                            ? '—'
-                            : pct(f.asistencia.calificacion)}
-                        </span>
-                      </li>
-                    )}
-                  </ul>
+                  <div className="mb-3 ml-6 border-l border-tinta/12 pl-3">
+                    <Detalle registro={f} columnas={columnas} />
+                  </div>
                 </details>
               </li>
             ))}
@@ -357,6 +400,103 @@ export default function NotasPanel({ grupo }) {
 
         </>
       )}
+    </div>
+  )
+}
+
+// Ojo abierto o tachado, según si las notas se están mostrando. Es el único
+// ícono del panel: acompaña al texto del botón, no lo reemplaza.
+function Ojo({ abierto }) {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="shrink-0"
+    >
+      {abierto ? (
+        <>
+          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+          <circle cx="12" cy="12" r="3" />
+        </>
+      ) : (
+        <>
+          <path d="M9.9 5.2A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.2 6.2A17.7 17.7 0 0 0 2 12s3.5 7 10 7c2 0 3.7-.6 5.2-1.5" />
+          <path d="M3 3l18 18" />
+        </>
+      )}
+    </svg>
+  )
+}
+
+/**
+ * Detalle de un estudiante: sus actividades agrupadas por rubro, con el
+ * subtotal de cada uno. Es lo que antes ocupaba una columna por actividad en la
+ * tabla principal; acá cabe entero y sin recortar ningún título.
+ */
+function Detalle({ registro, columnas }) {
+  const porNombre = new Map()
+  for (const a of columnas) {
+    const k = (a.rubro || '').trim()
+    if (!porNombre.has(k)) porNombre.set(k, [])
+    porNombre.get(k).push(a)
+  }
+
+  return (
+    <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+      {registro.porRubro.map((r) => {
+        const suyas = r.esAsistencia ? [] : porNombre.get((r.nombre || '').trim()) || []
+        return (
+          <div key={r.nombre} className="min-w-0">
+            <div className="flex items-baseline justify-between gap-3 border-b border-tinta/15 pb-1">
+              <span className="min-w-0 break-words text-[13px] font-semibold uppercase tracking-wide text-tinta/70">
+                {r.nombre}
+                <span className="font-normal normal-case text-tinta/50"> · vale {r.valor}%</span>
+              </span>
+              <span className="shrink-0 font-semibold tabular-nums text-tinta">
+                {r.calificadas === 0 ? '—' : pct(r.obtenido)}
+              </span>
+            </div>
+
+            {r.esAsistencia ? (
+              <p className="pt-1.5 text-[15px] text-tinta/70">
+                {registro.asistencia?.conteos
+                  ? `Se calcula sola · ${registro.asistencia.conteos.presente} presentes, ${registro.asistencia.conteos.ausente} ausencias, ${registro.asistencia.conteos.tardia} tardías`
+                  : 'Todavía no hay lista pasada en este periodo.'}
+              </p>
+            ) : suyas.length === 0 ? (
+              <p className="pt-1.5 text-[15px] text-tinta/55">Sin actividades.</p>
+            ) : (
+              <ul className="space-y-1 pt-1.5">
+                {suyas.map((a) => {
+                  const celda = registro.filas.find((x) => x.asignacion.id === a.id)
+                  return (
+                    <li
+                      key={a.id}
+                      className="flex items-baseline justify-between gap-3 text-[15px]"
+                    >
+                      {/* Título completo, en varias líneas si hace falta. */}
+                      <span className="min-w-0 break-words text-tinta/75">
+                        {a.titulo}
+                        <span className="text-tinta/50"> · {a.porcentaje ?? '—'}%</span>
+                      </span>
+                      <span className="shrink-0 tabular-nums">
+                        <Celda fila={celda} />
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

@@ -35,7 +35,9 @@ export async function listarAsignacionesDeGrupos(grupoIds) {
 export async function obtenerAsignacion(asignacionId) {
   const { data, error } = await supabase
     .from('asignaciones')
-    .select('*, clase:clases(id, titulo)')
+    // El grupo viene para saber si las notas de ese periodo ya están
+    // publicadas; sin eso, el detalle mostraría la nota que el registro oculta.
+    .select('*, clase:clases(id, titulo), grupo:grupos(id, notas_ocultas)')
     .eq('id', asignacionId)
     .single()
   if (error) throw error

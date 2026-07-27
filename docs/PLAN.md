@@ -214,6 +214,26 @@ archivos**, con la fecha límite visible y el aviso de si acepta tardías.
 
 ### 3.6 Docente — registro de calificaciones
 
+> **Corregido el 2026-07-26, después de verlo con datos reales.** El boceto de
+> abajo pone **una columna por actividad**. Con 7 actividades la tabla ya no
+> cabía en pantalla y los títulos había que recortarlos («Cotidiano #2 — Fra…»);
+> con 20 sería ilegible. Y para leer un registro uno quiere el **subtotal del
+> rubro**, que es lo que pide el MEP, no cada tarea suelta.
+>
+> **Lo vigente:** las columnas son los **rubros** (`Trabajo cotidiano 45% ·
+> Tareas 10% · Pruebas 40% · Asistencia 5% · NOTA`). Caben siempre, sin recortar
+> ningún texto. **El detalle no se pierde:** al tocar la fila de un estudiante
+> se despliegan sus actividades agrupadas por rubro, con el Valor % y la
+> calificación de cada una.
+>
+> Dos cosas más que salieron de la misma revisión:
+> - **El color ya no miente.** Se pintaba de rojo toda nota bajo el mínimo, y a
+>   mitad de periodo eso es falso: con un 55% evaluado nadie llega a 65 todavía,
+>   así que el grupo entero aparecía reprobando. Ahora verde = ya aprobó, rojo =
+>   ya no le alcanza ni sacando todo lo que falta, tinta = se define
+>   (`lib/notas.js → estadoAprobacion`).
+> - **El registro abre en el periodo de HOY**, no siempre en el I (§3.9).
+
 La misma lógica, transpuesta: estudiantes en filas, actividades en columnas.
 
 ```
@@ -231,6 +251,39 @@ Notas · I Periodo ▾              Evaluado: 30 de 100%    [⬇ Excel] [⬇ Res
 
 Con muchas actividades la tabla se desplaza en horizontal con la columna
 Estudiante fija. En celular, una fila por estudiante que se despliega.
+
+### 3.9 Publicar las notas cuando el docente quiera
+
+Pedido del 2026-07-26. El docente suele querer terminar de calificar a **todo**
+el grupo antes de que nadie vea su nota; si no, el primero en ser revisado ya
+anda preguntando.
+
+- Es **por periodo**: se publica el I y se deja el II oculto mientras se
+  califica. Columna `grupos.notas_ocultas` (jsonb, lista de periodos ocultos).
+  Vacío = publicado, así que **los grupos que ya existían no cambian**.
+- El interruptor va **junto al selector de periodo** del registro, con un ícono
+  de ojo. No en una caja aparte: ocupaba media pantalla para una sola decisión.
+- El estudiante **sigue viendo qué entregó y cuándo**; lo que se guarda es la
+  calificación, en la lista, en el total, en el resumen por rubro y en el
+  detalle de la actividad. Se le dice por qué, no se le deja la celda muda.
+
+> **Alcance honesto:** esto es **presentación, no secreto**. La nota sigue en la
+> base y RLS no puede tapar una sola columna de una fila que el estudiante tiene
+> derecho a ver. Sirve para «todavía no», no para información confidencial.
+
+### 3.10 El periodo que se abre por defecto
+
+El docente pasaba lista un 25 de julio, entraba a Notas —que abría siempre en el
+I Periodo— y no veía reflejada la asistencia: en un grupo de dos periodos, esa
+fecha cae en el II. Parecía que el sistema no guardaba nada.
+
+- `lib/periodos.js → periodoDeFecha(grupo, fecha)` resuelve a qué periodo
+  pertenece un día, usando las fechas que cargó el docente y, si no las cargó,
+  el reparto del año lectivo.
+- El registro del docente y la Evaluación del estudiante **abren en el periodo
+  de hoy**.
+- El pase de lista dice, debajo del campo de fecha, **para qué periodo cuenta**
+  ese día.
 
 ### 3.7 Los 3 errores que se corrigen en la misma pasada
 

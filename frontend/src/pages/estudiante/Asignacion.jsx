@@ -16,6 +16,7 @@ import {
 } from '../../lib/entregas'
 import { calificacionDe, pct } from '../../lib/notas'
 import { obtenerAsignacion } from '../../services/asignaciones.service'
+import { notasPublicadas } from '../../services/grupos.service'
 import {
   obtenerEntrega,
   crearEntrega,
@@ -140,6 +141,9 @@ export default function AsignacionEstudiante() {
   const tipo = tipoDe(asignacion)
   const editable = puedeEntregar(asignacion, entrega)
   const calificada = entrega?.estado === 'calificada'
+  // Si el docente todavía no publicó las notas del periodo, acá tampoco se
+  // muestran: si no, bastaba con abrir la actividad para saltarse el registro.
+  const notasVisibles = notasPublicadas(asignacion.grupo, asignacion.periodo)
   const archivos = entrega?.archivos || []
   const esPrueba = asignacion.requiere_entrega === false
   const sinInfo =
@@ -249,7 +253,18 @@ export default function AsignacionEstudiante() {
 
         {/* ── Columna derecha: revisión y entrega. Primera en celular. ────── */}
         <div className="order-1 space-y-5 lg:order-2">
-          {calificada && <Revision asignacion={asignacion} entrega={entrega} />}
+          {calificada &&
+            (notasVisibles ? (
+              <Revision asignacion={asignacion} entrega={entrega} />
+            ) : (
+              <Panel titulo="Revisión">
+                <p className="text-[15px] text-tinta/75">
+                  Tu profe ya revisó esta actividad, pero todavía no publicó las
+                  notas del periodo. Cuando las muestre, vas a ver acá tu
+                  calificación y su retroalimentación.
+                </p>
+              </Panel>
+            ))}
 
           {esPrueba && (
             <Panel titulo="Esta actividad no se entrega">
@@ -487,7 +502,7 @@ function VisorArchivo({ url, nombre, tipo }) {
         />
       ) : (
         <div className="flex h-28 min-w-0 flex-col items-center justify-center gap-2 overflow-hidden bg-pizarra/[0.05] px-2">
-          <span className="grid h-11 w-9 shrink-0 place-items-center rounded-md border border-pizarra/25 bg-superficie text-xs font-extrabold text-pizarra shadow-sm transition-transform group-hover:scale-105">
+          <span className="grid h-11 w-10 shrink-0 place-items-center rounded-md border border-pizarra/25 bg-superficie text-[13px] font-extrabold text-pizarra shadow-sm transition-transform group-hover:scale-105">
             {ext}
           </span>
           <span className="line-clamp-2 w-full break-all px-1 text-center text-sm leading-tight text-tinta/75">
@@ -519,7 +534,7 @@ function PreviewLocal({ file }) {
         <img src={url} alt={file.name} className="h-28 w-full object-cover" />
       ) : (
         <div className="flex h-28 min-w-0 flex-col items-center justify-center gap-2 overflow-hidden bg-pizarra/[0.05] px-2">
-          <span className="grid h-11 w-9 shrink-0 place-items-center rounded-md border border-pizarra/25 bg-superficie text-xs font-extrabold text-pizarra shadow-sm">
+          <span className="grid h-11 w-10 shrink-0 place-items-center rounded-md border border-pizarra/25 bg-superficie text-[13px] font-extrabold text-pizarra shadow-sm">
             {ext}
           </span>
           <span className="line-clamp-2 w-full break-all px-1 text-center text-sm leading-tight text-tinta/75">

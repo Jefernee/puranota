@@ -7,6 +7,7 @@ import {
   periodosDeGrupo,
   periodoValido,
   fechasSugeridasPeriodos,
+  periodoDeFecha,
   CALENDARIO_LECTIVO,
 } from './periodos'
 
@@ -107,6 +108,64 @@ describe('fechasSugeridasPeriodos — reparto del año lectivo', () => {
     for (const p of ['I', 'II', 'III']) {
       expect(f[p].inicio).toMatch(/^\d{4}-\d{2}-\d{2}$/)
       expect(f[p].fin).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    }
+  })
+})
+
+describe('periodoDeFecha — a qué periodo cuenta un día', () => {
+  // El caso que motivó la función: el docente pasa lista un 25 de julio, abre
+  // Notas y no ve nada, porque el registro abría siempre en el I Periodo.
+  const dosPeriodos = { periodo: '2', anio: 2026 }
+  const tresPeriodos = { periodo: '3', anio: 2026 }
+
+  it('el 25 de julio NO es del I Periodo en un grupo de dos', () => {
+    expect(periodoDeFecha(dosPeriodos, '2026-07-25')).toBe('II')
+  })
+
+  it('febrero cae en el I', () => {
+    expect(periodoDeFecha(dosPeriodos, '2026-02-15')).toBe('I')
+  })
+
+  it('respeta las fechas que cargó el docente por encima de las sugeridas', () => {
+    const grupo = {
+      periodo: '2',
+      anio: 2026,
+      periodos_fechas: {
+        I: { inicio: '2026-02-01', fin: '2026-08-31' },
+        II: { inicio: '2026-09-01', fin: '2026-12-15' },
+      },
+    }
+    // Con el reparto automático el 25 de julio sería del II; con estas fechas, del I.
+    expect(periodoDeFecha(grupo, '2026-07-25')).toBe('I')
+    expect(periodoDeFecha(grupo, '2026-09-02')).toBe('II')
+  })
+
+  it('ubica cada tramo en un grupo de tres periodos', () => {
+    expect(periodoDeFecha(tresPeriodos, '2026-03-01')).toBe('I')
+    expect(periodoDeFecha(tresPeriodos, '2026-07-01')).toBe('II')
+    expect(periodoDeFecha(tresPeriodos, '2026-11-01')).toBe('III')
+  })
+
+  it('antes de que arranque el curso muestra el primero', () => {
+    expect(periodoDeFecha(dosPeriodos, '2026-01-05')).toBe('I')
+  })
+
+  it('después del cierre muestra el último', () => {
+    expect(periodoDeFecha(dosPeriodos, '2026-12-28')).toBe('II')
+    expect(periodoDeFecha(tresPeriodos, '2026-12-28')).toBe('III')
+  })
+
+  it('acepta un objeto Date además de un texto', () => {
+    expect(periodoDeFecha(dosPeriodos, new Date(2026, 1, 15))).toBe('I')
+  })
+
+  it('un grupo sin año usa el de la fecha', () => {
+    expect(periodoDeFecha({ periodo: '2' }, '2027-02-10')).toBe('I')
+  })
+
+  it('nunca devuelve un periodo que el grupo no tiene', () => {
+    for (const d of ['2026-01-01', '2026-06-15', '2026-12-31']) {
+      expect(periodosDeGrupo(dosPeriodos)).toContain(periodoDeFecha(dosPeriodos, d))
     }
   })
 })

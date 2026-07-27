@@ -140,6 +140,39 @@ export async function guardarRubros(grupoId, rubrosPorPeriodo) {
 }
 
 /**
+ * ¿Las calificaciones de este periodo ya están publicadas para el estudiante?
+ *
+ * El docente puede querer terminar de calificar a todo el grupo antes de que
+ * nadie vea su nota. Vacío = publicado, así que los grupos que existían siguen
+ * funcionando igual que antes.
+ *
+ * OJO: esto es presentación, no secreto. Oculta la nota en la pantalla del
+ * estudiante, pero el dato sigue en la base y RLS no puede tapar una sola
+ * columna. Sirve para "todavía no", no para información confidencial.
+ */
+export function notasPublicadas(grupo, periodo) {
+  const ocultas = Array.isArray(grupo?.notas_ocultas) ? grupo.notas_ocultas : []
+  return !ocultas.includes(periodo)
+}
+
+/** Publica u oculta las calificaciones de un periodo. Devuelve el grupo. */
+export async function definirNotasPublicadas(grupo, periodo, publicar) {
+  const previas = Array.isArray(grupo?.notas_ocultas) ? grupo.notas_ocultas : []
+  const ocultas = publicar
+    ? previas.filter((p) => p !== periodo)
+    : [...new Set([...previas, periodo])]
+
+  const { data, error } = await supabase
+    .from('grupos')
+    .update({ notas_ocultas: ocultas })
+    .eq('id', grupo.id)
+    .select()
+    .single()
+  if (error) throw new Error('No se pudo cambiar la visibilidad de las notas.')
+  return data
+}
+
+/**
  * Normaliza grupos.rubros a la forma { I:[], II:[], III:[] }.
  * Acepta el formato viejo (arreglo plano) tratándolo como rubros del I Periodo,
  * para no romper grupos creados antes del ADR-001.

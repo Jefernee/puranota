@@ -2,8 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import Alerta from '../Alerta'
-import { periodosDeGrupo, etiquetaPeriodo } from '../../lib/periodos'
-import { rubrosPorPeriodo, rangoPeriodo } from '../../services/grupos.service'
+import { periodosDeGrupo, etiquetaPeriodo, periodoDeFecha } from '../../lib/periodos'
+import {
+  rubrosPorPeriodo,
+  rangoPeriodo,
+  notasPublicadas,
+} from '../../services/grupos.service'
 import { listarAsistenciaGrupo } from '../../services/asistencia.service'
 import {
   calcularRegistro,
@@ -49,7 +53,9 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
   const rubrosPP = rubrosPorPeriodo(grupo)
   const umbral = grupo.mep_modalidad ? umbralDeModalidad(grupo.mep_modalidad) : null
 
-  const [periodo, setPeriodo] = useState(periodos[0] || 'I')
+  // Abre en el periodo de hoy, igual que el registro del docente: si abriera
+  // siempre en el I, en agosto el estudiante vería un periodo que ya cerró.
+  const [periodo, setPeriodo] = useState(() => periodoDeFecha(grupo))
   const [asisRows, setAsisRows] = useState([])
 
   useEffect(() => {
@@ -84,8 +90,14 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
   }, [items, periodo, grupo, asisRows])
 
   const { filas, asistencia, notaFinal, evaluado, porRubro, avisos, conteos } = reg
+  // El docente puede no haber publicado todavía las notas de este periodo. Se
+  // sigue viendo qué se entregó y cuándo; lo que se guarda es la calificación.
+  const verNotas = notasPublicadas(grupo, periodo)
   const hayRubros = (rubrosPP[periodo] || []).length > 0
-  const aprueba = umbral != null && notaFinal != null && notaFinal >= umbral
+  // Si las notas no están publicadas, tampoco se adelanta el "vas aprobando":
+  // sería decir la nota sin decirla.
+  const aprueba =
+    verNotas && umbral != null && notaFinal != null && notaFinal >= umbral
   const presencia = porcentajePresencia(conteos)
 
   const ordenadas = [...filas].sort((a, b) => {
@@ -125,6 +137,13 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
           ))}
         </div>
       </div>
+
+      {!verNotas && (
+        <Alerta tipo="info">
+          Tu profe todavía no publicó las notas del {etiquetaPeriodo(periodo)}. Podés
+          ver qué entregaste y cuándo; la calificación aparece cuando él la muestre.
+        </Alerta>
+      )}
 
       {avisos.rubro.length > 0 && (
         <Alerta tipo="advertencia">
@@ -176,11 +195,16 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
                   <FilaActividad
                     key={f.asignacion.id}
                     fila={f}
+                    verNotas={verNotas}
                     claseTitulo={tituloClase.get(f.asignacion.clase_id)}
                   />
                 ))}
                 {asistencia && (
-                  <FilaAsistencia asistencia={asistencia} conteos={conteos} />
+                  <FilaAsistencia
+                    asistencia={asistencia}
+                    conteos={conteos}
+                    verNotas={verNotas}
+                  />
                 )}
               </tbody>
               <tfoot>
@@ -190,14 +214,22 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
                     Nota final:
                   </td>
                   <td className="whitespace-nowrap py-4 pl-3 text-right">
-                    <span
-                      className={`text-2xl font-bold tabular-nums ${
-                        aprueba ? 'text-pizarra' : 'text-tinta'
-                      }`}
-                    >
-                      {notaFinal == null ? '—' : pct(notaFinal)}
-                    </span>
-                    <span className="font-semibold text-tinta/60">/100%</span>
+                    {verNotas ? (
+                      <>
+                        <span
+                          className={`text-2xl font-bold tabular-nums ${
+                            aprueba ? 'text-pizarra' : 'text-tinta'
+                          }`}
+                        >
+                          {notaFinal == null ? '—' : pct(notaFinal)}
+                        </span>
+                        <span className="font-semibold text-tinta/60">/100%</span>
+                      </>
+                    ) : (
+                      <span className="text-base font-semibold text-ambar">
+                        Sin publicar
+                      </span>
+                    )}
                   </td>
                   <td aria-hidden="true" />
                 </tr>
@@ -226,11 +258,16 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
                 <FilaMovil
                   key={f.asignacion.id}
                   fila={f}
+                  verNotas={verNotas}
                   claseTitulo={tituloClase.get(f.asignacion.clase_id)}
                 />
               ))}
               {asistencia && (
-                <FilaMovilAsistencia asistencia={asistencia} conteos={conteos} />
+                <FilaMovilAsistencia
+                  asistencia={asistencia}
+                  conteos={conteos}
+                  verNotas={verNotas}
+                />
               )}
             </ul>
             {/* Resumen del periodo. La nota arriba con su etiqueta al lado, y
@@ -241,14 +278,18 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
                 <span className="text-[13px] font-semibold uppercase tracking-wide text-tinta/65">
                   Nota final
                 </span>
-                <span
-                  className={`shrink-0 text-2xl font-bold leading-none tabular-nums ${
-                    aprueba ? 'text-pizarra' : 'text-tinta'
-                  }`}
-                >
-                  {notaFinal == null ? '—' : pct(notaFinal)}
-                  <span className="text-sm font-semibold text-tinta/55"> / 100%</span>
-                </span>
+                {verNotas ? (
+                  <span
+                    className={`shrink-0 text-2xl font-bold leading-none tabular-nums ${
+                      aprueba ? 'text-pizarra' : 'text-tinta'
+                    }`}
+                  >
+                    {notaFinal == null ? '—' : pct(notaFinal)}
+                    <span className="text-sm font-semibold text-tinta/55"> / 100%</span>
+                  </span>
+                ) : (
+                  <span className="shrink-0 font-semibold text-ambar">Sin publicar</span>
+                )}
               </div>
 
               <dl className="divide-y divide-tinta/10 text-sm">
@@ -274,7 +315,7 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
           </div>
 
           {/* ── Resumen por rubro ──────────────────────────────────────────── */}
-          {porRubro.length > 0 && (
+          {verNotas && porRubro.length > 0 && (
             <section className="rounded-cuaderno border border-tinta/12 bg-tinta/[0.02] px-4 py-3.5">
               <h3 className="mb-2.5 text-[13px] font-semibold uppercase tracking-wide text-tinta/65">
                 Resumen por rubro
@@ -315,7 +356,15 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
 // El número, o el motivo por el que no hay número. Nunca un número que no esté
 // sumado en la NOTA FINAL: esa es la regla que hace verificable el registro.
 
-function CeldaCalificacion({ fila, grande = false }) {
+function CeldaCalificacion({ fila, grande = false, verNotas = true }) {
+  // Sin publicar: se dice por qué no hay número, no se deja la celda muda.
+  if (!verNotas) {
+    return (
+      <span className="whitespace-nowrap rounded-full bg-ambar/15 px-2 py-1 text-[13px] font-medium text-ambar ring-1 ring-inset ring-ambar/30">
+        Sin publicar
+      </span>
+    )
+  }
   if (fila.noCuenta) {
     return (
       <span
@@ -366,7 +415,7 @@ function Flecha() {
 
 // ─── Fila de actividad (escritorio) ───────────────────────────────────────────
 
-function FilaActividad({ fila, claseTitulo }) {
+function FilaActividad({ fila, claseTitulo, verNotas = true }) {
   const a = fila.asignacion
   const tipo = tipoDe(a)
   const est = estadoRegistro(a, fila.entrega)
@@ -409,7 +458,7 @@ function FilaActividad({ fila, claseTitulo }) {
         {fila.valor == null ? '—' : `${fila.valor}%`}
       </td>
       <td className="whitespace-nowrap py-3 pl-3 text-right align-top">
-        <CeldaCalificacion fila={fila} grande />
+        <CeldaCalificacion fila={fila} grande verNotas={verNotas} />
       </td>
       <td className="py-3 pr-1 text-right align-top">
         <Flecha />
@@ -418,7 +467,7 @@ function FilaActividad({ fila, claseTitulo }) {
   )
 }
 
-function FilaAsistencia({ asistencia, conteos }) {
+function FilaAsistencia({ asistencia, conteos, verNotas = true }) {
   return (
     <tr className="border-b border-tinta/10 bg-tinta/[0.02]">
       <td className="py-3 pl-1 align-top">
@@ -443,7 +492,11 @@ function FilaAsistencia({ asistencia, conteos }) {
         {asistencia.valor == null ? '—' : `${asistencia.valor}%`}
       </td>
       <td className="whitespace-nowrap py-3 pl-3 text-right align-top">
-        {asistencia.calificacion == null ? (
+        {!verNotas ? (
+          <span className="whitespace-nowrap rounded-full bg-ambar/15 px-2 py-1 text-[13px] font-medium text-ambar ring-1 ring-inset ring-ambar/30">
+            Sin publicar
+          </span>
+        ) : asistencia.calificacion == null ? (
           <span className="text-tinta/40">—</span>
         ) : (
           <span className="text-base font-bold tabular-nums text-tinta">
@@ -458,7 +511,7 @@ function FilaAsistencia({ asistencia, conteos }) {
 
 // ─── Fila compacta (celular) ──────────────────────────────────────────────────
 
-function FilaMovil({ fila, claseTitulo }) {
+function FilaMovil({ fila, claseTitulo, verNotas = true }) {
   const a = fila.asignacion
   const tipo = tipoDe(a)
   const est = estadoRegistro(a, fila.entrega)
@@ -491,7 +544,7 @@ function FilaMovil({ fila, claseTitulo }) {
           <span className="text-sm tabular-nums text-tinta/60">
             Vale {fila.valor == null ? '—' : `${fila.valor}%`}
           </span>
-          <CeldaCalificacion fila={fila} grande />
+          <CeldaCalificacion fila={fila} grande verNotas={verNotas} />
         </span>
 
         <span className="mt-0.5 shrink-0">
@@ -502,7 +555,7 @@ function FilaMovil({ fila, claseTitulo }) {
   )
 }
 
-function FilaMovilAsistencia({ asistencia, conteos }) {
+function FilaMovilAsistencia({ asistencia, conteos, verNotas = true }) {
   return (
     <li className="flex items-start gap-3 py-3.5">
       <span className="mt-0.5">
@@ -525,9 +578,15 @@ function FilaMovilAsistencia({ asistencia, conteos }) {
         <span className="text-sm tabular-nums text-tinta/60">
           Vale {asistencia.valor == null ? '—' : `${asistencia.valor}%`}
         </span>
-        <span className="text-base font-bold tabular-nums text-tinta">
-          {asistencia.calificacion == null ? '—' : pct(asistencia.calificacion)}
-        </span>
+        {!verNotas ? (
+          <span className="whitespace-nowrap rounded-full bg-ambar/15 px-2 py-1 text-[13px] font-medium text-ambar ring-1 ring-inset ring-ambar/30">
+            Sin publicar
+          </span>
+        ) : (
+          <span className="text-base font-bold tabular-nums text-tinta">
+            {asistencia.calificacion == null ? '—' : pct(asistencia.calificacion)}
+          </span>
+        )}
       </span>
 
       {/* Sin flecha: la asistencia no se abre, se calcula sola. */}

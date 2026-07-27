@@ -54,7 +54,7 @@ export default function Layout({ children, ancho = 'normal' }) {
             <button
               type="button"
               onClick={() => setTema(alternarTema())}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-tinta/15 bg-superficie text-tinta/70 shadow-sm transition-colors hover:border-pizarra/40 hover:text-pizarra"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-tinta/15 bg-superficie text-tinta/70 shadow-sm transition-colors hover:border-pizarra/40 hover:text-pizarra"
               title={tema === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
               aria-label={
                 tema === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'

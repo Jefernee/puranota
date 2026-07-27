@@ -203,7 +203,7 @@ export default function AvisosModal({ abierto, onCerrar, docenteId, grupos }) {
                     <button
                       type="button"
                       onClick={() => setConfirmarId(a.id)}
-                      className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-tinta/55 transition-colors hover:bg-margen/10 hover:text-margen"
+                      className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-tinta/55 transition-colors hover:bg-margen/10 hover:text-margen"
                       aria-label="Borrar aviso"
                       title="Borrar"
                     >

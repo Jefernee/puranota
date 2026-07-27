@@ -9,6 +9,7 @@ import {
   porcentajeAsistencia,
   porcentajePresencia,
   esRubroAsistencia,
+  estadoAprobacion,
   pct,
   pctFijo,
   redondear,
@@ -526,5 +527,98 @@ describe('formato de números (REAC Art. 26)', () => {
     expect(redondearAnual(79.49)).toBe(79)
     expect(redondearAnual(79)).toBe(79)
     expect(redondearAnual(null)).toBeNull()
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Subtotales por rubro: son las COLUMNAS del registro del docente, así que un
+// error acá se ve en pantalla como una nota equivocada por rubro.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('porRubro — la columna que ve el docente', () => {
+  it('suma las actividades de cada rubro, no las muestra sueltas', () => {
+    const { porRubro } = registroDeReferencia()
+    const tc = porRubro.find((r) => r.nombre === 'Trabajo cotidiano')
+    // Cotidiano #3 aporta 12; el Taller está entregado pero sin revisar.
+    expect(tc.obtenido).toBe(12)
+    expect(tc.calificadas).toBe(1)
+    expect(tc.total).toBe(2)
+  })
+
+  it('distingue "sacó cero" de "todavía no le califican nada"', () => {
+    // Sin esto, la pantalla mostraría 0% en un rubro que aún no se evaluó.
+    const rubros = [{ nombre: 'Pruebas', porcentaje: 40 }]
+    const acts = [asignacion({ id: 'p1', rubro: 'Pruebas', porcentaje: 40, puntos: 10 })]
+
+    const sinCalificar = calcularRegistro(rubros, acts, () => null, null)
+    expect(sinCalificar.porRubro[0]).toMatchObject({ obtenido: 0, calificadas: 0, total: 1 })
+
+    const conCero = calcularRegistro(rubros, acts, () => calificada(0), null)
+    expect(conCero.porRubro[0]).toMatchObject({ obtenido: 0, calificadas: 1, total: 1 })
+  })
+
+  it('no cuenta como suya la actividad huérfana', () => {
+    const r = calcularRegistro(
+      RUBROS_MEP,
+      [asignacion({ id: 'h', rubro: 'Fantasma', porcentaje: 20 })],
+      () => calificada(10),
+      null,
+    )
+    for (const x of r.porRubro) expect(x.total).toBe(x.esAsistencia ? 1 : 0)
+  })
+
+  it('la asistencia también reporta si ya tiene nota', () => {
+    const conLista = calcularRegistro(RUBROS_MEP, [], () => null, CONTEOS)
+    const asis = conLista.porRubro.find((r) => r.esAsistencia)
+    expect(asis).toMatchObject({ obtenido: 4.5, calificadas: 1, total: 1 })
+
+    const sinLista = calcularRegistro(RUBROS_MEP, [], () => null, null)
+    expect(sinLista.porRubro.find((r) => r.esAsistencia).calificadas).toBe(0)
+  })
+
+  it('la suma de los subtotales sigue dando la NOTA FINAL', () => {
+    // Es la regla de oro aplicada a las columnas del docente: lo que se ve
+    // sumado horizontalmente tiene que dar el número de la derecha.
+    const r = registroDeReferencia()
+    const suma = r.porRubro.reduce((s, x) => s + x.obtenido, 0)
+    expect(redondear(suma)).toBe(redondear(r.notaFinal))
+  })
+})
+
+describe('estadoAprobacion — para que el color no mienta', () => {
+  it('a mitad de periodo nadie está reprobado todavía', () => {
+    // 30 de nota con solo 55% evaluado: le faltan 45 puntos por jugarse.
+    expect(estadoAprobacion(30, 55, 65)).toBe('en_juego')
+  })
+
+  it('marca aprobado apenas alcanza el mínimo', () => {
+    expect(estadoAprobacion(65, 70, 65)).toBe('aprobado')
+    expect(estadoAprobacion(90, 100, 65)).toBe('aprobado')
+  })
+
+  it('marca perdido solo cuando ya no le alcanza', () => {
+    // 20 de nota con 90% evaluado: aun sacando el 10% que falta, llega a 30.
+    expect(estadoAprobacion(20, 90, 65)).toBe('perdido')
+  })
+
+  it('en el límite exacto todavía está en juego', () => {
+    // 25 + 40 por evaluar = 65 justo: alcanza si saca todo.
+    expect(estadoAprobacion(25, 60, 65)).toBe('en_juego')
+    expect(estadoAprobacion(24.99, 60, 65)).toBe('perdido')
+  })
+
+  it('con el periodo cerrado, por debajo del mínimo es perdido', () => {
+    expect(estadoAprobacion(64, 100, 65)).toBe('perdido')
+  })
+
+  it('sin umbral o sin nota no dice nada', () => {
+    expect(estadoAprobacion(50, 100, null)).toBeNull()
+    expect(estadoAprobacion(null, 100, 65)).toBeNull()
+  })
+
+  it('usa el umbral de la modalidad, no un número fijo', () => {
+    // Diversificada aprueba con 70, EGB con 65 (Art. 47).
+    expect(estadoAprobacion(67, 100, 65)).toBe('aprobado')
+    expect(estadoAprobacion(67, 100, 70)).toBe('perdido')
   })
 })

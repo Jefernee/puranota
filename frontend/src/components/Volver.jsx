@@ -5,8 +5,11 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 // - Por defecto es un enlace a `to`.
 // - `atras`: regresa a la página anterior del historial (respaldo a `to`).
 // - `onClick`: acción propia (ej. cerrar una vista inline sin cambiar de ruta).
+// El `-ml-1` compensa el relleno para que el texto siga alineado con el título
+// de la página. El alto mínimo es la regla de objetivo táctil: medía 28px y en
+// un celular eso se falla al tocar.
 const ESTILO =
-  'group inline-flex items-center gap-2 text-sm font-semibold text-pizarra'
+  'group -ml-1 inline-flex min-h-[40px] items-center gap-2 rounded-cuaderno px-1 text-sm font-semibold text-pizarra transition-colors active:bg-pizarra/[0.07]'
 
 function Contenido({ children }) {
   return (

@@ -113,7 +113,7 @@ export default function EstudiantesPanel({ grupoId }) {
             </span>
           )}
         </p>
-        <button onClick={cargar} className="text-sm text-pizarra hover:underline">
+        <button onClick={cargar} className="-mx-2 inline-flex min-h-[40px] items-center rounded-cuaderno px-2 text-sm text-pizarra hover:underline">
           Actualizar
         </button>
       </div>

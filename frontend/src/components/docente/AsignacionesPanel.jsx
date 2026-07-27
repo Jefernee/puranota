@@ -147,7 +147,7 @@ export default function AsignacionesPanel({ grupo }) {
               key={p}
               type="button"
               onClick={() => setPeriodoActivo(p)}
-              className={`rounded-cuaderno border px-4 py-2 text-sm font-semibold shadow-sm transition-colors ${
+              className={`min-h-[40px] rounded-cuaderno border px-4 py-2 text-sm font-semibold shadow-sm transition-colors ${
                 periodoActivo === p
                   ? 'border-pizarra bg-pizarra text-papel'
                   : 'border-tinta/15 bg-superficie text-tinta/70 hover:border-pizarra/40 hover:text-pizarra'

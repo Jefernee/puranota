@@ -351,7 +351,7 @@ export default function RubrosEditor({ grupo, onGuardar }) {
               setError('')
               setOk('')
             }}
-            className={`rounded-cuaderno px-4 py-2 text-sm font-semibold transition-colors ${
+            className={`min-h-[40px] rounded-cuaderno px-4 py-2 text-sm font-semibold transition-colors ${
               periodoActivo === p
                 ? 'bg-pizarra text-papel'
                 : 'bg-tinta/5 text-tinta/70 hover:bg-tinta/10'
@@ -418,7 +418,7 @@ export default function RubrosEditor({ grupo, onGuardar }) {
                   type="button"
                   onClick={() => quitar(i)}
                   disabled={listaActiva.length === 1}
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-cuaderno text-tinta/60 hover:bg-margen/10 hover:text-margen disabled:opacity-30"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-cuaderno text-tinta/60 hover:bg-margen/10 hover:text-margen disabled:opacity-30"
                   aria-label="Quitar rubro"
                   title="Quitar"
                 >
@@ -456,7 +456,7 @@ export default function RubrosEditor({ grupo, onGuardar }) {
                 <button
                   type="button"
                   onClick={() => editarAsis('activa', false)}
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-cuaderno text-tinta/60 hover:bg-margen/10 hover:text-margen"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-cuaderno text-tinta/60 hover:bg-margen/10 hover:text-margen"
                   aria-label="Quitar asistencia"
                   title="Quitar asistencia"
                 >
@@ -470,7 +470,7 @@ export default function RubrosEditor({ grupo, onGuardar }) {
             <button
               type="button"
               onClick={agregar}
-              className="text-sm font-semibold text-pizarra hover:underline"
+              className="-mx-2 inline-flex min-h-[40px] items-center rounded-cuaderno px-2 text-sm font-semibold text-pizarra hover:underline"
             >
               + Agregar rubro
             </button>

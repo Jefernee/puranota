@@ -54,7 +54,7 @@ export default function CodigoAcceso({ grupoId, codigo, onCambio }) {
         <button
           type="button"
           onClick={copiar}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-tinta/55 transition-colors hover:bg-tinta/5 hover:text-pizarra"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-md text-tinta/55 transition-colors hover:bg-tinta/5 hover:text-pizarra"
           title={copiado ? '¡Copiado!' : 'Copiar código'}
           aria-label="Copiar código"
         >
@@ -91,7 +91,7 @@ export default function CodigoAcceso({ grupoId, codigo, onCambio }) {
         <button
           type="button"
           onClick={() => setConfirmar(true)}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-tinta/55 transition-colors hover:bg-tinta/5 hover:text-tinta"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-md text-tinta/55 transition-colors hover:bg-tinta/5 hover:text-tinta"
           title="Regenerar código"
           aria-label="Regenerar código"
         >
