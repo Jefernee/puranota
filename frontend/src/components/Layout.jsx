@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { cerrarSesion } from '../services/auth.service'
 import Logo from './Logo'
+import Ambiente from './Ambiente'
 import MenuAcciones from './MenuAcciones'
 import { temaActual, alternarTema } from '../lib/tema'
 
@@ -44,7 +45,10 @@ export default function Layout({ children, ancho = 'normal' }) {
     <div className="min-h-screen bg-papel">
       <header className="sticky top-0 z-10 border-b border-tinta/10 bg-papel/90 backdrop-blur">
         <div className={`mx-auto flex ${maxW} items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8`}>
-          <Logo className="text-xl" />
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Logo className="text-xl" />
+            <Ambiente />
+          </div>
 
           <div className="flex items-center gap-2">
             <button
