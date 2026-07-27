@@ -1,6 +1,74 @@
+import { useState } from 'react'
 import GaleriaArchivos from './GaleriaArchivos'
 import { renderMarkdownSimple } from '../lib/markdown'
 import { youtubeEmbed } from '../lib/youtube'
+
+/**
+ * Video propio del docente (ADR-005).
+ *
+ * Dos cosas que no hacía antes:
+ *
+ * 1. **Reserva su espacio.** Un `<video>` sin dimensiones y sin metadatos
+ *    cargados colapsa al tamaño por defecto del navegador —una cajita de unos
+ *    150px— y se ve como si estuviera roto. Con la proporción 16:9 fija, ocupa
+ *    lo mismo antes y después de cargar, y no salta el contenido de abajo.
+ *
+ * 2. **Dice cuándo falló.** Si el archivo ya no está en el almacenamiento, el
+ *    navegador deja el recuadro en negro sin explicar nada. Acá se avisa y se
+ *    ofrece el enlace directo, que a veces sí abre.
+ */
+function VideoPropio({ archivo }) {
+  const [fallo, setFallo] = useState(false)
+
+  if (fallo) {
+    return (
+      <div className="flex flex-col items-start gap-2 rounded-cuaderno border border-ambar/35 bg-ambar/10 px-4 py-4">
+        <p className="text-[15px] font-semibold text-ambar">
+          No se pudo cargar el video
+        </p>
+        <p className="text-[15px] text-tinta/75">
+          Puede ser tu conexión, o que el archivo ya no esté disponible.
+          {archivo.nombre && (
+            <>
+              {' '}
+              Se llama <b className="break-all text-tinta">{archivo.nombre}</b>.
+            </>
+          )}
+        </p>
+        <a
+          href={archivo.url}
+          target="_blank"
+          rel="noreferrer"
+          className="btn-secundario"
+        >
+          Abrir el archivo directamente
+        </a>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="w-full overflow-hidden rounded-cuaderno bg-black"
+      style={{ aspectRatio: '16 / 9' }}
+    >
+      <video
+        src={archivo.url}
+        controls
+        playsInline
+        preload="metadata"
+        onError={() => setFallo(true)}
+        className="h-full w-full"
+      >
+        Tu navegador no puede reproducir este video.{' '}
+        <a href={archivo.url} className="underline">
+          Descargalo acá
+        </a>
+        .
+      </video>
+    </div>
+  )
+}
 
 // Muestra el contenido de una clase: video de YouTube (responsivo),
 // texto en markdown simple y archivos adjuntos. Props: clase.
@@ -46,23 +114,7 @@ export default function ClaseContenido({ clase, compacto = false }) {
     )
   })
   for (const v of videos) {
-    mediaItems.push(
-      <div key={v.id ?? v.url} className="overflow-hidden rounded-cuaderno bg-black">
-        <video
-          src={v.url}
-          controls
-          playsInline
-          preload="metadata"
-          className="max-h-[70vh] w-full"
-        >
-          Tu navegador no puede reproducir este video.{' '}
-          <a href={v.url} className="underline">
-            Descargalo acá
-          </a>
-          .
-        </video>
-      </div>,
-    )
+    mediaItems.push(<VideoPropio key={v.id ?? v.url} archivo={v} />)
   }
 
   if (mediaItems.length === 0 && !hayTexto) {
