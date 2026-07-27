@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import Alerta from '../Alerta'
+import Modal from '../Modal'
 import {
   listarAsistenciaFecha,
   listarAsistenciaGrupo,
@@ -78,6 +79,7 @@ export default function AsistenciaPanel({ grupo: grupoInicial }) {
   const [filasAsis, setFilasAsis] = useState(null)
   const [periodoResumen, setPeriodoResumen] = useState(() => periodoDeFecha(grupo))
   const [cargandoResumen, setCargandoResumen] = useState(false)
+  const [modalLecciones, setModalLecciones] = useState(false)
 
   async function cargar() {
     setCargando(true)
@@ -130,6 +132,15 @@ export default function AsistenciaPanel({ grupo: grupoInicial }) {
 
   // Cuántas lecciones tiene el día que se está pasando.
   const leccionesHoy = Math.max(1, Number(peso(fecha)) || 1)
+
+  // Resumen corto para el botón: "9 por semana" o "sin configurar".
+  const resumenLecciones = useMemo(() => {
+    const total = DIAS.reduce(
+      (s, d) => s + (Number(grupo.lecciones_por_dia?.[String(d.n)]) || 0),
+      0,
+    )
+    return total > 0 ? `· ${total} por semana` : '· sin configurar'
+  }, [grupo])
 
   const conteoDia = useMemo(() => {
     const c = { presente: 0, ausente: 0, tardia: 0, justificada: 0, fuga: 0, sin: 0 }
@@ -211,7 +222,44 @@ export default function AsistenciaPanel({ grupo: grupoInicial }) {
             {v.label}
           </button>
         ))}
+
+        {/* Configuración del año, no del día: va como acción al lado de las
+            pestañas y se abre en modal, para no ocupar espacio permanente
+            encima del pase de lista. */}
+        <button
+          type="button"
+          onClick={() => setModalLecciones(true)}
+          className="ml-auto inline-flex min-h-[40px] items-center gap-2 rounded-cuaderno border border-tinta/15 bg-superficie px-3 text-sm font-semibold text-tinta/70 shadow-sm transition-colors hover:border-pizarra/40 hover:text-pizarra"
+          title="Cuántas lecciones da el grupo cada día de la semana"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            className="shrink-0"
+          >
+            <rect x="3" y="4" width="18" height="17" rx="2" />
+            <path d="M3 9h18M8 2v4M16 2v4" />
+          </svg>
+          Lecciones por día
+          <span className="font-normal text-tinta/55">
+            {resumenLecciones}
+          </span>
+        </button>
       </div>
+
+      <ModalLecciones
+        grupo={grupo}
+        abierto={modalLecciones}
+        onCerrar={() => setModalLecciones(false)}
+        onGuardado={setGrupo}
+      />
 
       {vista === 'resumen' ? (
         <>
@@ -287,8 +335,6 @@ export default function AsistenciaPanel({ grupo: grupoInicial }) {
             </b>
             .
           </p>
-
-          <LeccionesPorDia grupo={grupo} onGuardado={setGrupo} />
 
           {!cargando && estudiantes.length > 0 && (
             <p className="text-sm text-tinta/60">
@@ -391,29 +437,44 @@ export default function AsistenciaPanel({ grupo: grupoInicial }) {
 /**
  * Cuántas lecciones da el grupo cada día. Se llena una sola vez.
  *
- * Va plegado: la mayoría de los grupos tiene bloques iguales y no necesita
- * tocarlo. Solo importa cuando son desiguales —lunes 2 lecciones y miércoles
- * 4—, porque ahí faltar un miércoles pesa el doble (Art. 37).
+ * Va en un modal, no en una caja fija: es una decisión que se toma al empezar
+ * el año y después no se vuelve a tocar, así que no tiene por qué ocupar
+ * espacio todos los días encima del pase de lista.
+ *
+ * Los días se ajustan con − y + en vez de escribir un número: en el celular es
+ * más rápido, no abre el teclado y el control se ve como control (un campo
+ * numérico vacío se confundía con el fondo).
  */
-function LeccionesPorDia({ grupo, onGuardado }) {
+function ModalLecciones({ grupo, abierto, onCerrar, onGuardado }) {
   const guardadas = grupo.lecciones_por_dia || {}
-  const [abierto, setAbierto] = useState(false)
   const [valores, setValores] = useState(() =>
-    Object.fromEntries(DIAS.map((d) => [d.n, guardadas[String(d.n)] || ''])),
+    Object.fromEntries(DIAS.map((d) => [d.n, Number(guardadas[String(d.n)]) || 0])),
   )
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
-  const [ok, setOk] = useState(false)
 
-  const configurados = DIAS.filter((d) => guardadas[String(d.n)] > 0)
+  // Al reabrir el modal se vuelve a leer lo guardado, para no arrastrar una
+  // edición que se canceló.
+  useEffect(() => {
+    if (abierto) {
+      setValores(
+        Object.fromEntries(DIAS.map((d) => [d.n, Number(guardadas[String(d.n)]) || 0])),
+      )
+      setError('')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abierto, grupo.lecciones_por_dia])
+
+  const total = DIAS.reduce((s, d) => s + (valores[d.n] || 0), 0)
+  const ajustar = (dia, delta) =>
+    setValores((v) => ({ ...v, [dia]: Math.max(0, Math.min(12, (v[dia] || 0) + delta)) }))
 
   async function guardar() {
     setGuardando(true)
     setError('')
-    setOk(false)
     try {
       onGuardado(await guardarLeccionesPorDia(grupo.id, valores))
-      setOk(true)
+      onCerrar()
     } catch (e) {
       setError(e?.message || 'No se pudo guardar.')
     } finally {
@@ -422,74 +483,88 @@ function LeccionesPorDia({ grupo, onGuardado }) {
   }
 
   return (
-    <div className="rounded-cuaderno border border-tinta/12 bg-tinta/[0.02] px-4 py-3">
-      <button
-        type="button"
-        onClick={() => setAbierto((v) => !v)}
-        className="flex min-h-[40px] w-full items-center justify-between gap-3 text-left"
-      >
-        <span className="min-w-0 text-[15px] text-tinta/80">
-          <b className="text-tinta">Lecciones por día</b>
-          {configurados.length === 0 ? (
-            <span className="text-tinta/60">
-              {' '}
-              · sin configurar, cada día cuenta como 1
-            </span>
-          ) : (
-            <span className="text-tinta/60">
-              {' · '}
-              {configurados.map((d) => `${d.label} ${guardadas[String(d.n)]}`).join(' · ')}
-            </span>
-          )}
-        </span>
-        <span
-          className={`shrink-0 text-tinta/40 transition-transform ${abierto ? 'rotate-90' : ''}`}
-          aria-hidden="true"
-        >
-          ›
-        </span>
-      </button>
+    <Modal abierto={abierto} onCerrar={onCerrar} titulo="Lecciones por día">
+      <p className="text-[15px] leading-relaxed text-tinta/75">
+        El MEP cuenta la asistencia <b className="text-tinta">por lección</b>, no por
+        día (Art. 37). Si un día das más lecciones que otro, faltar ese día pesa más.
+        Dejá en <b className="text-tinta">0</b> los días que no ves al grupo.
+      </p>
 
-      {abierto && (
-        <div className="mt-3 border-t border-tinta/10 pt-3">
-          <p className="mb-3 text-sm text-tinta/70">
-            El MEP cuenta la asistencia <b>por lección</b>, no por día (Art. 37). Si
-            un día das más lecciones que otro, faltar ese día pesa más. Dejá en
-            blanco los días que no ves al grupo.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {DIAS.map((d) => (
-              <label key={d.n} className="text-sm">
-                <span className="mb-1 block text-tinta/65">{d.label}</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="12"
-                  inputMode="numeric"
-                  className="campo w-[92px]"
-                  value={valores[d.n]}
-                  onChange={(e) =>
-                    setValores((v) => ({ ...v, [d.n]: e.target.value }))
-                  }
+      <ul className="mt-4 divide-y divide-tinta/10 border-y border-tinta/12">
+        {DIAS.map((d) => {
+          const n = valores[d.n] || 0
+          return (
+            <li key={d.n} className="flex items-center justify-between gap-4 py-2.5">
+              <span className="text-[15px] font-medium text-tinta">{d.label}</span>
+              <span className="flex shrink-0 items-center gap-1">
+                <BotonPaso
+                  signo="−"
+                  onClick={() => ajustar(d.n, -1)}
+                  disabled={n === 0}
+                  etiqueta={`Quitar una lección del ${d.label}`}
                 />
-              </label>
-            ))}
-          </div>
-          <Alerta tipo="error">{error}</Alerta>
-          <div className="mt-3 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={guardar}
-              disabled={guardando}
-              className="btn-primario disabled:opacity-50"
-            >
-              {guardando ? 'Guardando…' : 'Guardar'}
-            </button>
-            {ok && <span className="text-sm font-medium text-pizarra">Guardado ✓</span>}
-          </div>
-        </div>
-      )}
-    </div>
+                <span
+                  className={`w-14 text-center text-base font-bold tabular-nums ${
+                    n === 0 ? 'text-tinta/35' : 'text-tinta'
+                  }`}
+                >
+                  {n === 0 ? '—' : n}
+                </span>
+                <BotonPaso
+                  signo="+"
+                  onClick={() => ajustar(d.n, 1)}
+                  disabled={n >= 12}
+                  etiqueta={`Agregar una lección al ${d.label}`}
+                />
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+
+      <p className="mt-3 text-sm text-tinta/65">
+        {total === 0 ? (
+          <>Sin configurar: cada día que pasés lista va a contar como una lección.</>
+        ) : (
+          <>
+            Total: <b className="text-tinta">{total}</b>{' '}
+            {total === 1 ? 'lección' : 'lecciones'} por semana.
+          </>
+        )}
+      </p>
+
+      <Alerta tipo="error">{error}</Alerta>
+
+      <div className="mt-5 flex justify-end gap-2">
+        <button type="button" onClick={onCerrar} className="btn-secundario">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={guardar}
+          disabled={guardando}
+          className="btn-primario disabled:opacity-50"
+        >
+          {guardando ? 'Guardando…' : 'Guardar'}
+        </button>
+      </div>
+    </Modal>
+  )
+}
+
+// Botón redondo de − / +. Objetivo táctil de 40px y borde visible, para que no
+// se confunda con el fondo.
+function BotonPaso({ signo, onClick, disabled, etiqueta }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={etiqueta}
+      className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-tinta/20 bg-superficie text-lg font-semibold text-tinta/75 shadow-sm transition-colors hover:border-pizarra hover:text-pizarra disabled:opacity-30 disabled:hover:border-tinta/20 disabled:hover:text-tinta/75"
+    >
+      {signo}
+    </button>
   )
 }
 
