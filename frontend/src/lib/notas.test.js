@@ -12,6 +12,7 @@ import {
   estadoAprobacion,
   pct,
   pctFijo,
+  pesoDeLeccion,
   redondear,
   redondearAnual,
 } from './notas'
@@ -620,5 +621,144 @@ describe('estadoAprobacion — para que el color no mienta', () => {
     // Diversificada aprueba con 70, EGB con 65 (Art. 47).
     expect(estadoAprobacion(67, 100, 65)).toBe('aprobado')
     expect(estadoAprobacion(67, 100, 70)).toBe('perdido')
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Asistencia POR LECCIÓN (REAC Art. 37) y fuga (Art. 154 inciso d).
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('pesoDeLeccion — cuánto vale cada día', () => {
+  // 2026-07-27 es lunes; 2026-07-29, miércoles.
+  const porDia = { 1: 2, 3: 4 } // lunes 2 lecciones, miércoles 4
+
+  it('sin configurar, cada día pesa 1 (como antes)', () => {
+    const p = pesoDeLeccion({})
+    expect(p('2026-07-27')).toBe(1)
+    expect(pesoDeLeccion(null)('2026-07-29')).toBe(1)
+  })
+
+  it('devuelve las lecciones del día de la semana', () => {
+    const p = pesoDeLeccion(porDia)
+    expect(p('2026-07-27')).toBe(2) // lunes
+    expect(p('2026-07-29')).toBe(4) // miércoles
+  })
+
+  it('un día no configurado igual cuenta 1: mejor eso que perder el registro', () => {
+    expect(pesoDeLeccion(porDia)('2026-07-28')).toBe(1) // martes
+  })
+
+  it('no se corre de día por la zona horaria', () => {
+    // `new Date('2026-07-27')` se lee como UTC y en Costa Rica caería el 26
+    // (domingo), devolviendo el peso equivocado.
+    expect(pesoDeLeccion({ 1: 7 })('2026-07-27')).toBe(7)
+  })
+
+  it('aguanta una fecha inválida', () => {
+    expect(pesoDeLeccion(porDia)('')).toBe(1)
+    expect(pesoDeLeccion(porDia)(null)).toBe(1)
+  })
+})
+
+describe('contarAsistencia por lección', () => {
+  const porDia = { 1: 2, 3: 4 }
+  const peso = pesoDeLeccion(porDia)
+
+  it('faltar a un bloque de 4 pesa el doble que a uno de 2', () => {
+    const c = contarAsistencia(
+      [
+        { fecha: '2026-07-27', estado: 'ausente' }, // lunes: 2 lecciones
+        { fecha: '2026-07-29', estado: 'ausente' }, // miércoles: 4
+      ],
+      null,
+      peso,
+    )
+    expect(c.ausente).toBe(6)
+  })
+
+  it('los conteos son de lecciones, no de días', () => {
+    const c = contarAsistencia(
+      [
+        { fecha: '2026-07-27', estado: 'presente' },
+        { fecha: '2026-07-29', estado: 'presente' },
+      ],
+      null,
+      peso,
+    )
+    expect(c.presente).toBe(6)
+    expect(diasRegistrados(c)).toBe(6)
+  })
+
+  it('sin peso se comporta igual que antes', () => {
+    const filas = [
+      { fecha: '2026-07-27', estado: 'presente' },
+      { fecha: '2026-07-29', estado: 'ausente' },
+    ]
+    expect(contarAsistencia(filas, null)).toEqual({
+      presente: 1, ausente: 1, tardia: 0, justificada: 0,
+    })
+  })
+
+  describe('fuga', () => {
+    it('reparte el día: lo que perdió es ausencia, lo demás presente', () => {
+      // Miércoles de 4 lecciones, se fue en la última.
+      const c = contarAsistencia(
+        [{ fecha: '2026-07-29', estado: 'fuga', lecciones_perdidas: 1 }],
+        null,
+        peso,
+      )
+      expect(c).toEqual({ presente: 3, ausente: 1, tardia: 0, justificada: 0 })
+    })
+
+    it('sin dato asume que se fue en la última lección', () => {
+      const c = contarAsistencia(
+        [{ fecha: '2026-07-29', estado: 'fuga' }],
+        null,
+        peso,
+      )
+      expect(c.ausente).toBe(1)
+      expect(c.presente).toBe(3)
+    })
+
+    it('no puede perder más lecciones que las del día', () => {
+      const c = contarAsistencia(
+        [{ fecha: '2026-07-27', estado: 'fuga', lecciones_perdidas: 9 }],
+        null,
+        peso,
+      )
+      expect(c.ausente).toBe(2) // el lunes solo tiene 2
+      expect(c.presente).toBe(0)
+    })
+
+    it('con un solo bloque, irse equivale a faltar', () => {
+      const c = contarAsistencia([{ fecha: '2026-07-28', estado: 'fuga' }], null, peso)
+      expect(c).toEqual({ presente: 0, ausente: 1, tardia: 0, justificada: 0 })
+    })
+
+    it('las lecciones perdidas por fuga bajan la nota, las presentes no', () => {
+      // 10 miércoles de 4 lecciones = 40; una fuga de 1 lección = 2,5% ausencias
+      const filas = Array.from({ length: 10 }, (_, i) => ({
+        fecha: ['2026-07-01','2026-07-08','2026-07-15','2026-07-22','2026-07-29',
+                '2026-08-05','2026-08-12','2026-08-19','2026-08-26','2026-09-02'][i],
+        estado: i === 0 ? 'fuga' : 'presente',
+        lecciones_perdidas: 1,
+      }))
+      const c = contarAsistencia(filas, null, peso)
+      expect(diasRegistrados(c)).toBe(40)
+      expect(c.ausente).toBe(1)
+      // 1/40 = 2,5% → menos del 10% → mantiene el 100 (Art. 37)
+      expect(notaAsistencia(c, { mep: true })).toBe(100)
+    })
+
+    it('muchas fugas sí terminan bajando la nota', () => {
+      // 10 miércoles, se fuga en 2 lecciones de cada uno: 20 de 40 = 50%
+      const filas = ['2026-07-01','2026-07-08','2026-07-15','2026-07-22','2026-07-29',
+                     '2026-08-05','2026-08-12','2026-08-19','2026-08-26','2026-09-02']
+        .map((fecha) => ({ fecha, estado: 'fuga', lecciones_perdidas: 2 }))
+      const c = contarAsistencia(filas, null, peso)
+      expect(c.ausente).toBe(20)
+      expect(diasRegistrados(c)).toBe(40)
+      expect(notaAsistencia(c, { mep: true })).toBe(0) // 50% o más → 0
+    })
   })
 })

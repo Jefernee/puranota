@@ -18,7 +18,7 @@ export async function listarAsistenciaFecha(grupoId, fecha) {
 export async function listarAsistenciaGrupo(grupoId) {
   const { data, error } = await supabase
     .from('asistencia')
-    .select('estudiante_id, fecha, estado')
+    .select('estudiante_id, fecha, estado, lecciones_perdidas')
     .eq('grupo_id', grupoId)
   if (error) throw error
   return data
@@ -28,11 +28,24 @@ export async function listarAsistenciaGrupo(grupoId) {
  * Marca (o actualiza) la asistencia de un estudiante en una fecha.
  * Upsert contra el unique (grupo_id, estudiante_id, fecha).
  */
-export async function marcarAsistencia(grupoId, estudianteId, fecha, estado) {
+export async function marcarAsistencia(
+  grupoId,
+  estudianteId,
+  fecha,
+  estado,
+  leccionesPerdidas = null,
+) {
   const { data, error } = await supabase
     .from('asistencia')
     .upsert(
-      { grupo_id: grupoId, estudiante_id: estudianteId, fecha, estado },
+      {
+        grupo_id: grupoId,
+        estudiante_id: estudianteId,
+        fecha,
+        estado,
+        // Solo tiene sentido en una fuga: cuántas lecciones del día se perdió.
+        lecciones_perdidas: estado === 'fuga' ? leccionesPerdidas || 1 : null,
+      },
       { onConflict: 'grupo_id,estudiante_id,fecha' },
     )
     .select()

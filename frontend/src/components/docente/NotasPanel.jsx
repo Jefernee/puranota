@@ -16,6 +16,7 @@ import {
   contarAsistencia,
   diasRegistrados,
   estadoAprobacion,
+  pesoDeLeccion,
   pct,
 } from '../../lib/notas'
 import { umbralDeModalidad } from '../../lib/mep'
@@ -99,6 +100,9 @@ export default function NotasPanel({ grupo: grupoInicial }) {
 
   const rubros = rubrosPP[periodo] || []
   const rango = rangoPeriodo(grupo, periodo)
+  // Cuánto vale cada día en lecciones (Art. 37): sin esto, faltar a un bloque
+  // de 4 lecciones pesaría lo mismo que faltar a uno de 2.
+  const peso = useMemo(() => pesoDeLeccion(grupo.lecciones_por_dia), [grupo])
 
   // Orden estable de las columnas: por fecha de entrega, igual que lo ve el
   // estudiante en su registro.
@@ -120,6 +124,7 @@ export default function NotasPanel({ grupo: grupoInicial }) {
         const conteos = contarAsistencia(
           asisRows.filter((r) => r.estudiante_id === sid),
           rango,
+          peso,
         )
         const reg = calcularRegistro(
           rubros,
@@ -130,7 +135,7 @@ export default function NotasPanel({ grupo: grupoInicial }) {
         return { estudiante: m.estudiante, ...reg }
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [estudiantes, rubros, columnas, entregaMap, asisRows, periodo],
+    [estudiantes, rubros, columnas, entregaMap, asisRows, periodo, peso],
   )
 
   const avisos = filas[0]?.avisos || { rubro: [], sinValor: [] }

@@ -285,6 +285,37 @@ fecha cae en el II. Parecía que el sistema no guardaba nada.
 - El pase de lista dice, debajo del campo de fecha, **para qué periodo cuenta**
   ese día.
 
+### 3.11 Asistencia por lección y fuga (Arts. 37 y 154)
+
+Pedido del 2026-07-26, después de leer el reglamento de nuevo.
+
+**El problema.** El Art. 37 dice *«el número total de **lecciones impartidas**»*,
+y PuraNota guardaba **una marca por día**. Coincide mientras todos los días
+tengan la misma cantidad de lecciones; deja de coincidir con bloques desiguales
+—lunes 2 lecciones y miércoles 4—, que en secundaria son comunes: faltar un
+miércoles debe pesar el doble.
+
+**La solución.** `grupos.lecciones_por_dia` = `{"1":2,"3":4}` (1 = lunes … 5 =
+viernes). Se configura **una sola vez**, desde un bloque plegado en la pestaña
+Asistencia. El pase de lista no cambia: se sigue marcando una vez por día, pero
+cada marca pesa lo que corresponde. **Vacío = cada día pesa 1**, así que ningún
+grupo existente cambia de comportamiento.
+
+**Fuga (F).** El estudiante estuvo y se fue antes de terminar el bloque. No es
+ausencia del día entero: se guarda `asistencia.lecciones_perdidas` y esas
+lecciones cuentan como **ausencias injustificadas** (Art. 37), mientras las que
+sí estuvo cuentan presente. El selector de cuántas perdió aparece solo si el día
+tiene más de una lección.
+
+> **Lo que decide el reglamento, no nosotros.** La fuga es **falta leve de
+> conducta** (Art. 154 inciso d) y corresponde amonestación verbal o escrita. El
+> mismo artículo, inciso e, aclara que las ausencias reguladas por los Arts. 36
+> y 37 **no** son falta de conducta: van por la vía de la asistencia. Por eso
+> PuraNota descuenta las lecciones perdidas de la nota **y avisa** que además
+> hay una falta que atender — pero **no gestiona conducta**: esa nota la
+> determina el conjunto de docentes de la sección (Art. 4351), y está fuera de
+> alcance.
+
 ### 3.7 Los 3 errores que se corrigen en la misma pasada
 
 Documentados en `CLAUDE.md` §7.6:

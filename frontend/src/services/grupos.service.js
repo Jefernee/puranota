@@ -155,6 +155,26 @@ export function notasPublicadas(grupo, periodo) {
   return !ocultas.includes(periodo)
 }
 
+/**
+ * Guarda cuántas lecciones da el grupo cada día de la semana, ej. {"1":2,"3":4}
+ * (1 = lunes … 5 = viernes). Los días en 0 o vacíos se quitan.
+ */
+export async function guardarLeccionesPorDia(grupoId, porDia) {
+  const limpio = {}
+  for (const [dia, n] of Object.entries(porDia || {})) {
+    const v = Number(n)
+    if (v > 0) limpio[String(dia)] = v
+  }
+  const { data, error } = await supabase
+    .from('grupos')
+    .update({ lecciones_por_dia: limpio })
+    .eq('id', grupoId)
+    .select()
+    .single()
+  if (error) throw new Error('No se pudieron guardar las lecciones por día.')
+  return data
+}
+
 /** Publica u oculta las calificaciones de un periodo. Devuelve el grupo. */
 export async function definirNotasPublicadas(grupo, periodo, publicar) {
   const previas = Array.isArray(grupo?.notas_ocultas) ? grupo.notas_ocultas : []

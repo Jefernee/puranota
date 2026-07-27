@@ -264,15 +264,69 @@ export function calcularRegistro(rubros, asignaciones, entregaDe, conteos = null
 // ─── Asistencia ───────────────────────────────────────────────────────────────
 
 /**
- * Cuenta los registros de asistencia dentro de un rango de fechas (o todos si no
- * hay rango). `rows` = [{fecha:'YYYY-MM-DD', estado}]; `rango` = {inicio, fin}|null.
+ * Cuántas lecciones vale cada día de la semana.
+ *
+ * El MEP cuenta la asistencia POR LECCIÓN, no por día (Art. 37: «el número
+ * total de lecciones impartidas»). Si el grupo tiene bloques desiguales —lunes
+ * 2 lecciones y miércoles 4— faltar un miércoles pesa el doble.
+ *
+ * `leccionesPorDia` es {"1":2,"3":4} con 1=lunes … 5=viernes. Vacío = cada día
+ * pesa 1, que es como funcionaba antes de existir esta configuración.
+ *
+ * Devuelve una función `(fecha) => número` para no rehacer el trabajo por fila.
  */
-export function contarAsistencia(rows, rango) {
+export function pesoDeLeccion(leccionesPorDia) {
+  const mapa =
+    leccionesPorDia && typeof leccionesPorDia === 'object' ? leccionesPorDia : {}
+  if (Object.keys(mapa).length === 0) return () => 1
+
+  return (fecha) => {
+    const [y, m, d] = String(fecha || '')
+      .slice(0, 10)
+      .split('-')
+      .map(Number)
+    // Se arma la fecha a mano: `new Date('2026-07-27')` la lee como UTC y en
+    // Costa Rica devolvería el día anterior.
+    if (!y || !m || !d) return 1
+    const n = Number(mapa[String(new Date(y, m - 1, d).getDay())])
+    // Un día no configurado igual cuenta: mejor pesar 1 que perder el registro.
+    return n > 0 ? n : 1
+  }
+}
+
+/**
+ * Cuenta la asistencia dentro de un rango de fechas (o toda, si no hay rango).
+ *
+ * `rows` = [{fecha:'YYYY-MM-DD', estado, lecciones_perdidas?}]
+ * `peso`  = función de `pesoDeLeccion`; por omisión cada día vale 1.
+ *
+ * Los conteos que devuelve son de LECCIONES, no de días.
+ *
+ * La **fuga** se reparte: el estudiante estuvo en la clase y se fue antes, así
+ * que las lecciones que perdió son ausencias injustificadas (Art. 37) y las que
+ * sí estuvo cuentan como presente. Aparte es falta leve de conducta (Art. 154
+ * inciso d), pero eso no lo lleva PuraNota.
+ */
+export function contarAsistencia(rows, rango, peso = () => 1) {
   const c = { presente: 0, ausente: 0, tardia: 0, justificada: 0 }
   for (const r of rows || []) {
     if (rango?.inicio && r.fecha < rango.inicio) continue
     if (rango?.fin && r.fecha > rango.fin) continue
-    if (c[r.estado] != null) c[r.estado]++
+
+    const lecciones = Math.max(1, Number(peso(r.fecha)) || 1)
+
+    if (r.estado === 'fuga') {
+      // Sin dato, se asume que se fue en la última lección.
+      const perdidas = Math.min(
+        lecciones,
+        Math.max(1, Number(r.lecciones_perdidas) || 1),
+      )
+      c.ausente += perdidas
+      c.presente += lecciones - perdidas
+      continue
+    }
+
+    if (c[r.estado] != null) c[r.estado] += lecciones
   }
   return c
 }

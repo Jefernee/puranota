@@ -5,7 +5,12 @@ import {
   listarAsistenciaGrupo,
   marcarAsistencia,
 } from '../../services/asistencia.service'
-import { listarEstudiantes, rubrosPorPeriodo, rangoPeriodo } from '../../services/grupos.service'
+import {
+  listarEstudiantes,
+  rubrosPorPeriodo,
+  rangoPeriodo,
+  guardarLeccionesPorDia,
+} from '../../services/grupos.service'
 import {
   etiquetaPeriodo,
   periodoDeFecha,
@@ -16,15 +21,30 @@ import {
   diasRegistrados,
   esRubroAsistencia,
   notaAsistencia,
+  pesoDeLeccion,
   pct,
 } from '../../lib/notas'
 
 // Estados posibles con su etiqueta corta y estilos de botón.
+//
+// La FUGA (Art. 154 inciso d) es cuando el estudiante estuvo y se fue antes de
+// que terminara el bloque. No es ausencia del día entero: perdió *algunas*
+// lecciones, y esas cuentan como ausencias injustificadas para la nota
+// (Art. 37). Aparte es falta leve de conducta, pero eso no lo lleva PuraNota.
 const ESTADOS = [
   { id: 'presente', label: 'Presente', corto: 'P', activo: 'bg-pizarra text-papel', idle: 'text-pizarra hover:bg-pizarra/10' },
   { id: 'ausente', label: 'Ausente', corto: 'A', activo: 'bg-margen text-papel', idle: 'text-margen hover:bg-margen/10' },
   { id: 'tardia', label: 'Tardía', corto: 'T', activo: 'bg-ambar text-papel', idle: 'text-ambar hover:bg-ambar/10' },
+  { id: 'fuga', label: 'Fuga', corto: 'F', activo: 'bg-guaria text-papel', idle: 'text-guaria hover:bg-guaria/10' },
   { id: 'justificada', label: 'Justif.', corto: 'J', activo: 'bg-tinta text-papel', idle: 'text-tinta/70 hover:bg-tinta/10' },
+]
+
+const DIAS = [
+  { n: 1, label: 'Lunes' },
+  { n: 2, label: 'Martes' },
+  { n: 3, label: 'Miércoles' },
+  { n: 4, label: 'Jueves' },
+  { n: 5, label: 'Viernes' },
 ]
 
 function hoyLocal() {
@@ -39,8 +59,11 @@ const VISTAS = [
   { id: 'resumen', label: 'Resumen' },
 ]
 
-export default function AsistenciaPanel({ grupo }) {
+export default function AsistenciaPanel({ grupo: grupoInicial }) {
+  const [grupo, setGrupo] = useState(grupoInicial)
   const grupoId = grupo.id
+  // Cuántas lecciones vale cada día (Art. 37). Sin configurar, cada día pesa 1.
+  const peso = useMemo(() => pesoDeLeccion(grupo.lecciones_por_dia), [grupo])
   const [vista, setVista] = useState('lista') // 'lista' | 'resumen' | 'fechas'
   const [fecha, setFecha] = useState(hoyLocal())
   const [estudiantes, setEstudiantes] = useState([])
@@ -65,7 +88,14 @@ export default function AsistenciaPanel({ grupo }) {
         listarAsistenciaFecha(grupoId, fecha),
       ])
       setEstudiantes(ests.filter((m) => m.estado === 'activo' && m.estudiante))
-      setRegistros(Object.fromEntries(asis.map((a) => [a.estudiante_id, a.estado])))
+      setRegistros(
+        Object.fromEntries(
+          asis.map((a) => [
+            a.estudiante_id,
+            { estado: a.estado, perdidas: a.lecciones_perdidas },
+          ]),
+        ),
+      )
     } catch (e) {
       setError(e?.message || 'No se pudo cargar la asistencia.')
     } finally {
@@ -78,13 +108,18 @@ export default function AsistenciaPanel({ grupo }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grupoId, fecha])
 
-  async function marcar(estudianteId, estado) {
+  async function marcar(estudianteId, estado, perdidas = null) {
     setError('')
     setGuardandoId(estudianteId)
     const previo = registros[estudianteId]
-    setRegistros((prev) => ({ ...prev, [estudianteId]: estado })) // optimista
+    const nuevo = {
+      estado,
+      // Al marcar fuga sin decir cuántas, se asume la última lección del bloque.
+      perdidas: estado === 'fuga' ? perdidas || previo?.perdidas || 1 : null,
+    }
+    setRegistros((prev) => ({ ...prev, [estudianteId]: nuevo })) // optimista
     try {
-      await marcarAsistencia(grupoId, estudianteId, fecha, estado)
+      await marcarAsistencia(grupoId, estudianteId, fecha, estado, nuevo.perdidas)
     } catch (e) {
       setRegistros((prev) => ({ ...prev, [estudianteId]: previo })) // revertir
       setError(e?.message || 'No se pudo guardar.')
@@ -93,12 +128,15 @@ export default function AsistenciaPanel({ grupo }) {
     }
   }
 
+  // Cuántas lecciones tiene el día que se está pasando.
+  const leccionesHoy = Math.max(1, Number(peso(fecha)) || 1)
+
   const conteoDia = useMemo(() => {
-    const c = { presente: 0, ausente: 0, tardia: 0, justificada: 0, sin: 0 }
+    const c = { presente: 0, ausente: 0, tardia: 0, justificada: 0, fuga: 0, sin: 0 }
     for (const m of estudiantes) {
-      const e = registros[m.estudiante.id]
-      if (e) c[e]++
-      else c.sin++
+      const e = registros[m.estudiante.id]?.estado
+      if (e && c[e] != null) c[e]++
+      else if (!e) c.sin++
     }
     return c
   }, [estudiantes, registros])
@@ -137,6 +175,7 @@ export default function AsistenciaPanel({ grupo }) {
       const c = contarAsistencia(
         filasAsis.filter((r) => r.estudiante_id === sid),
         rango,
+        peso,
       )
       const logro = diasRegistrados(c) > 0 && reglaAsistencia
         ? notaAsistencia(c, reglaAsistencia)
@@ -152,7 +191,7 @@ export default function AsistenciaPanel({ grupo }) {
       }
     }
     return mapa
-  }, [filasAsis, estudiantes, grupo, periodoResumen, reglaAsistencia])
+  }, [filasAsis, estudiantes, grupo, periodoResumen, reglaAsistencia, peso])
 
   return (
     <div className="space-y-4">
@@ -236,17 +275,27 @@ export default function AsistenciaPanel({ grupo }) {
             />
           </label>
 
-          {/* A qué periodo suma esta fecha. Sin esto, uno pasa lista un 25 de
-              julio, abre Notas en el I Periodo y cree que no se guardó nada. */}
+          {/* A qué periodo suma esta fecha, y cuántas lecciones vale. Sin esto,
+              uno pasa lista un 25 de julio, abre Notas en el I Periodo y cree
+              que no se guardó nada. */}
           <p className="text-sm text-tinta/65">
             Esta fecha cuenta para el{' '}
-            <b className="text-tinta/85">{etiquetaPeriodo(periodoDeFecha(grupo, fecha))}</b>.
+            <b className="text-tinta/85">{etiquetaPeriodo(periodoDeFecha(grupo, fecha))}</b>
+            {' · '}
+            <b className="text-tinta/85">
+              {leccionesHoy} {leccionesHoy === 1 ? 'lección' : 'lecciones'}
+            </b>
+            .
           </p>
+
+          <LeccionesPorDia grupo={grupo} onGuardado={setGrupo} />
 
           {!cargando && estudiantes.length > 0 && (
             <p className="text-sm text-tinta/60">
               {conteoDia.presente} presentes · {conteoDia.ausente} ausentes ·{' '}
-              {conteoDia.tardia} tardías · {conteoDia.justificada} justificadas
+              {conteoDia.tardia} tardías ·{' '}
+              {conteoDia.fuga} {conteoDia.fuga === 1 ? 'fuga' : 'fugas'} ·{' '}
+              {conteoDia.justificada} justificadas
               {conteoDia.sin > 0 && ` · ${conteoDia.sin} sin marcar`}
             </p>
           )}
@@ -271,9 +320,9 @@ export default function AsistenciaPanel({ grupo }) {
                     <span className="min-w-0 flex-1 break-words font-medium text-tinta">
                       {m.estudiante.nombre || m.estudiante.correo}
                     </span>
-                    <div className="flex gap-1">
+                    <div className="flex flex-wrap items-center justify-end gap-1">
                       {ESTADOS.map((e) => {
-                        const sel = actual === e.id
+                        const sel = actual?.estado === e.id
                         return (
                           <button
                             key={e.id}
@@ -282,20 +331,163 @@ export default function AsistenciaPanel({ grupo }) {
                             className={`min-h-[40px] rounded-cuaderno px-3 py-1.5 text-sm font-medium transition-colors ${
                               sel ? e.activo : e.idle
                             }`}
-                            title={e.label}
+                            title={
+                              e.id === 'fuga'
+                                ? 'Se fue antes de que terminara el bloque'
+                                : e.label
+                            }
                           >
                             <span className="sm:hidden">{e.corto}</span>
                             <span className="hidden sm:inline">{e.label}</span>
                           </button>
                         )
                       })}
+
+                      {/* Cuántas lecciones perdió al fugarse. Solo aparece si el
+                          día tiene más de una: con una sola, irse equivale a
+                          faltar y no hay nada que elegir. */}
+                      {actual?.estado === 'fuga' && leccionesHoy > 1 && (
+                        <label className="ml-1 flex items-center gap-1.5 text-sm text-tinta/70">
+                          <span>Perdió</span>
+                          <select
+                            className="min-h-[40px] rounded-cuaderno border border-tinta/20 bg-superficie px-2 text-sm text-tinta"
+                            value={actual.perdidas || 1}
+                            onChange={(ev) =>
+                              marcar(m.estudiante.id, 'fuga', Number(ev.target.value))
+                            }
+                            aria-label="Lecciones perdidas por la fuga"
+                          >
+                            {Array.from({ length: leccionesHoy }, (_, i) => i + 1).map(
+                              (n) => (
+                                <option key={n} value={n}>
+                                  {n} de {leccionesHoy}
+                                </option>
+                              ),
+                            )}
+                          </select>
+                        </label>
+                      )}
                     </div>
                   </li>
                 )
               })}
             </ul>
           )}
+
+          {conteoDia.fuga > 0 && (
+            <p className="text-sm text-tinta/65">
+              La <b className="text-tinta/85">fuga</b> resta solo las lecciones que
+              el estudiante perdió, no el día entero. Además es <b>falta leve</b> de
+              conducta (REAC Art. 154, inciso d) y corresponde amonestación: eso se
+              lleva fuera de PuraNota.
+            </p>
+          )}
         </>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Cuántas lecciones da el grupo cada día. Se llena una sola vez.
+ *
+ * Va plegado: la mayoría de los grupos tiene bloques iguales y no necesita
+ * tocarlo. Solo importa cuando son desiguales —lunes 2 lecciones y miércoles
+ * 4—, porque ahí faltar un miércoles pesa el doble (Art. 37).
+ */
+function LeccionesPorDia({ grupo, onGuardado }) {
+  const guardadas = grupo.lecciones_por_dia || {}
+  const [abierto, setAbierto] = useState(false)
+  const [valores, setValores] = useState(() =>
+    Object.fromEntries(DIAS.map((d) => [d.n, guardadas[String(d.n)] || ''])),
+  )
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError] = useState('')
+  const [ok, setOk] = useState(false)
+
+  const configurados = DIAS.filter((d) => guardadas[String(d.n)] > 0)
+
+  async function guardar() {
+    setGuardando(true)
+    setError('')
+    setOk(false)
+    try {
+      onGuardado(await guardarLeccionesPorDia(grupo.id, valores))
+      setOk(true)
+    } catch (e) {
+      setError(e?.message || 'No se pudo guardar.')
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  return (
+    <div className="rounded-cuaderno border border-tinta/12 bg-tinta/[0.02] px-4 py-3">
+      <button
+        type="button"
+        onClick={() => setAbierto((v) => !v)}
+        className="flex min-h-[40px] w-full items-center justify-between gap-3 text-left"
+      >
+        <span className="min-w-0 text-[15px] text-tinta/80">
+          <b className="text-tinta">Lecciones por día</b>
+          {configurados.length === 0 ? (
+            <span className="text-tinta/60">
+              {' '}
+              · sin configurar, cada día cuenta como 1
+            </span>
+          ) : (
+            <span className="text-tinta/60">
+              {' · '}
+              {configurados.map((d) => `${d.label} ${guardadas[String(d.n)]}`).join(' · ')}
+            </span>
+          )}
+        </span>
+        <span
+          className={`shrink-0 text-tinta/40 transition-transform ${abierto ? 'rotate-90' : ''}`}
+          aria-hidden="true"
+        >
+          ›
+        </span>
+      </button>
+
+      {abierto && (
+        <div className="mt-3 border-t border-tinta/10 pt-3">
+          <p className="mb-3 text-sm text-tinta/70">
+            El MEP cuenta la asistencia <b>por lección</b>, no por día (Art. 37). Si
+            un día das más lecciones que otro, faltar ese día pesa más. Dejá en
+            blanco los días que no ves al grupo.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {DIAS.map((d) => (
+              <label key={d.n} className="text-sm">
+                <span className="mb-1 block text-tinta/65">{d.label}</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="12"
+                  inputMode="numeric"
+                  className="campo w-[92px]"
+                  value={valores[d.n]}
+                  onChange={(e) =>
+                    setValores((v) => ({ ...v, [d.n]: e.target.value }))
+                  }
+                />
+              </label>
+            ))}
+          </div>
+          <Alerta tipo="error">{error}</Alerta>
+          <div className="mt-3 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={guardar}
+              disabled={guardando}
+              className="btn-primario disabled:opacity-50"
+            >
+              {guardando ? 'Guardando…' : 'Guardar'}
+            </button>
+            {ok && <span className="text-sm font-medium text-pizarra">Guardado ✓</span>}
+          </div>
+        </div>
       )}
     </div>
   )

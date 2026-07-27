@@ -404,8 +404,18 @@ la que se usa hoy**: una clase puede llevar varios videos de YouTube).
 son el video propio del docente (ADR-005) y se reproducen con `<video>`.
 
 **`asistencia`** — `grupo_id`, `estudiante_id`, `fecha` date,
-`estado` `'presente'|'ausente'|'tardia'|'justificada'`.
+`estado` `'presente'|'ausente'|'tardia'|'justificada'|'fuga'`,
+**(+)** `lecciones_perdidas` numeric (solo en `fuga`).
 Único `(grupo_id, estudiante_id, fecha)`.
+
+> **Se cuenta por LECCIÓN, no por día** (REAC Art. 37: *«el número total de
+> lecciones impartidas»*). Cada fila pesa lo que diga `grupos.lecciones_por_dia`
+> para ese día de la semana; vacío = 1, que es como funcionaba antes.
+>
+> La **fuga** es el estudiante que estuvo y se fue antes de terminar el bloque:
+> `lecciones_perdidas` cuentan como ausencias injustificadas y el resto como
+> presente. Aparte es **falta leve de conducta** (Art. 154 inciso d) y
+> corresponde amonestación — eso **no lo lleva PuraNota**, solo lo avisa.
 
 **`anuncios`** **(+ tabla nueva)** — `docente_id`, `contenido`, `grupo_ids` (array
 de uuid), `creado_en`. Avisos del docente dirigidos a varios grupos.
@@ -498,6 +508,17 @@ alter table public.asignaciones
   check (tipo in ('entrega','prueba','proyecto','foro'));
 update public.asignaciones set tipo = 'prueba'
  where requiere_entrega = false and tipo = 'entrega';
+
+-- 2026-07-26 — Asistencia por LECCIÓN (Art. 37) y estado de fuga (Art. 154 d).
+-- lecciones_por_dia: {"1":2,"3":4} con 1=lunes … 5=viernes. Vacío = cada día
+-- pesa 1, así los grupos que ya existían no cambian de comportamiento.
+alter table public.grupos
+  add column if not exists lecciones_por_dia jsonb not null default '{}'::jsonb;
+alter table public.asistencia
+  add column if not exists lecciones_perdidas numeric;
+alter table public.asistencia drop constraint if exists asistencia_estado_check;
+alter table public.asistencia add constraint asistencia_estado_check
+  check (estado = any (array['presente','ausente','tardia','justificada','fuga']));
 
 -- 2026-07-26 — Publicar las notas cuando el docente quiera (docs/PLAN.md §3.9).
 -- Vacío = publicado, así los grupos que ya existían no cambian de comportamiento.

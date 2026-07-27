@@ -14,6 +14,7 @@ import {
   contarAsistencia,
   diasRegistrados,
   porcentajePresencia,
+  pesoDeLeccion,
   pct,
 } from '../../lib/notas'
 import { tipoDe, estadoRegistro, TONO_BADGE } from '../../lib/entregas'
@@ -76,7 +77,11 @@ export default function EvaluacionEstudiante({ grupo, items, clases = [] }) {
   const reg = useMemo(() => {
     const delPeriodo = items.filter((i) => i.asignacion.periodo === periodo)
     const entregaPorId = new Map(delPeriodo.map((i) => [i.asignacion.id, i.entrega]))
-    const conteos = contarAsistencia(asisRows, rangoPeriodo(grupo, periodo))
+    const conteos = contarAsistencia(
+      asisRows,
+      rangoPeriodo(grupo, periodo),
+      pesoDeLeccion(grupo.lecciones_por_dia),
+    )
     return {
       ...calcularRegistro(
         rubrosPP[periodo] || [],
