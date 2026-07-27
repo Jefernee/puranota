@@ -442,6 +442,12 @@ Funciones auxiliares que usan las políticas RLS: `es_docente()`,
     OR: puede **ver** siempre, pero **modificar** solo antes de calificar.
   - **(+)** `"docente crea entrega"` en `entregas` — necesaria para
     `calificarPorEstudiante` (nota directa sin entrega del estudiante).
+  - **(±)** `"estudiante gestiona sus archivos"` en `entrega_archivos` — se le
+    corrigió el `with check` el **2026-07-26**. Pedía `estado = 'entregada'` solo
+    en el `using`, y en un `INSERT` **únicamente manda el `with check`**: el
+    estudiante podía adjuntar archivos a una entrega **ya calificada**. La
+    pantalla no lo ofrecía, pero la puerta estaba abierta. Ojo con este patrón:
+    en una política `for all`, el `using` no protege los INSERT.
 
 ### 6.5 Cambios de esquema aplicados a mano (en orden)
 
@@ -487,6 +493,18 @@ alter table public.asignaciones
   check (tipo in ('entrega','prueba','proyecto','foro'));
 update public.asignaciones set tipo = 'prueba'
  where requiere_entrega = false and tipo = 'entrega';
+
+-- 2026-07-26 — Cerrar el adjuntar a una entrega ya calificada.
+-- El `using` de la política no cubre los INSERT; hacía falta repetir la
+-- condición en el `with check`. Verificado después: adjuntar a una entrega
+-- calificada queda BLOQUEADO, entregar en una actividad abierta sigue
+-- PERMITIDO, y el estudiante sigue VIENDO sus archivos ya calificados.
+alter policy "estudiante gestiona sus archivos" on public.entrega_archivos
+  with check (exists (
+    select 1 from public.entregas e
+    where e.id = entrega_id
+      and e.estudiante_id = auth.uid()
+      and e.estado = 'entregada'));
 ```
 
 > **Tarea abierta:** regenerar `backend/aula_cr_fase1_schema.sql` desde la base
