@@ -147,7 +147,16 @@ export default function GrupoDetalle() {
 
   const panel = (
     <>
-      {tab === 'estudiantes' && <EstudiantesPanel grupoId={grupo.id} />}
+      {/* El código de acceso vive acá, no en el encabezado: se usa para que los
+          estudiantes se unan, así que su lugar es la pestaña donde uno mira la
+          matrícula. En la barra superior obligaba a recortar el título. */}
+      {tab === 'estudiantes' && (
+        <EstudiantesPanel
+          grupoId={grupo.id}
+          grupo={grupo}
+          onCambioCodigo={(nuevo) => setGrupo((g) => ({ ...g, codigo_acceso: nuevo }))}
+        />
+      )}
       {tab === 'asignaciones' && <AsignacionesPanel grupo={grupo} />}
       {tab === 'asistencia' && (
         <AsistenciaPanel grupo={grupo} />
@@ -202,28 +211,46 @@ export default function GrupoDetalle() {
   )
 
   return (
-    <Layout ancho="amplio">
-      {/* Encabezado compacto: el volver arriba, y el título con el código en la
-          misma línea. En celular el contenido del grupo empieza mucho antes. */}
-      <div className="mb-4 border-b border-tinta/10 pb-3">
-        <Volver to="/docente">Mis grupos</Volver>
-        <div className="mt-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-          <div className="min-w-0">
-            <h1 className="min-w-0 break-words text-lg font-bold leading-snug text-tinta sm:text-2xl">
-              {[tituloGrupo, ...chipsGrupo].join(' · ')}
-            </h1>
-            <p className="mt-0.5 text-sm text-tinta/65">
-              {grupo.anio} · {cantidadPeriodos(grupo)} periodos
-              {!grupo.activo && ' · inactivo'}
-            </p>
+    <Layout
+      ancho="amplio"
+      titulo={[tituloGrupo, ...chipsGrupo].join(' · ')}
+      subtitulo={`${grupo.anio} · ${cantidadPeriodos(grupo)} periodos${
+        !grupo.activo ? ' · inactivo' : ''
+      }`}
+      volver={<Volver to="/docente">Mis grupos</Volver>}
+    >
+      {/* En ESCRITORIO todo este encabezado vive en la barra fija: así el
+          contenido —que es a lo que uno entra— arranca de inmediato, y el grupo
+          en el que estás queda a la vista mientras bajás por la lista.
+          En CELULAR la barra no da para más (logo + dos botones ya la llenan),
+          así que el encabezado se queda acá. */}
+      <div className="mb-3 border-b border-tinta/10 pb-2.5 lg:hidden">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <Volver to="/docente" className="w-full">
+            Mis grupos
+          </Volver>
+          <h1 className="min-w-0 break-words text-lg font-bold leading-snug text-tinta">
+            {[tituloGrupo, ...chipsGrupo].join(' · ')}
+          </h1>
+          <p className="text-sm text-tinta/60">
+            {grupo.anio} · {cantidadPeriodos(grupo)} periodos
+            {!grupo.activo && ' · inactivo'}
+          </p>
+          <div className="w-full self-center">
+            <CodigoAcceso
+              grupoId={grupo.id}
+              codigo={grupo.codigo_acceso}
+              onCambio={(nuevo) => setGrupo((g) => ({ ...g, codigo_acceso: nuevo }))}
+            />
           </div>
-          <CodigoAcceso
-            grupoId={grupo.id}
-            codigo={grupo.codigo_acceso}
-            onCambio={(nuevo) => setGrupo((g) => ({ ...g, codigo_acceso: nuevo }))}
-          />
         </div>
       </div>
+
+      {/* El h1 tiene que existir también en escritorio, aunque el título se vea
+          en la barra: es la referencia para lectores de pantalla. */}
+      <h1 className="sr-only hidden lg:block">
+        {[tituloGrupo, ...chipsGrupo].join(' · ')}
+      </h1>
 
       {/* Navegación: pastillas (todas visibles) en móvil, barra lateral en escritorio. */}
       <div className="lg:hidden">

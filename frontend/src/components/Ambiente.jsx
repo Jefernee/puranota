@@ -34,7 +34,9 @@ export default function Ambiente() {
 
   return (
     <span
-      className={`hidden shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[13px] font-semibold uppercase tracking-wide ring-1 ring-inset sm:inline ${tono}`}
+      // Desde 1280: es una herramienta de desarrollo y no debe quitarle ancho
+      // al título de la página, que es contenido real.
+      className={`hidden shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[13px] font-semibold uppercase tracking-wide ring-1 ring-inset xl:inline ${tono}`}
       title={`Estás en tu computadora (npm run dev). Base de datos: ${hostDeLaBase()}`}
     >
       Local · {ES_PRUEBAS ? 'datos de prueba' : 'datos reales'}

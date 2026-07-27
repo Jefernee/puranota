@@ -283,13 +283,23 @@ export default function GrupoEstudiante() {
   )
 
   return (
-    <Layout ancho="amplio">
-      <div className="mb-4 border-b border-tinta/10 pb-3">
+    <Layout
+      ancho="amplio"
+      titulo={[tituloGrupo, ...chipsGrupo].join(' · ')}
+      volver={<Volver to="/estudiante">Mi cuaderno</Volver>}
+    >
+      {/* En escritorio el encabezado vive en la barra fija (ver Layout); acá
+          solo se muestra en celular, donde la barra no da para más. */}
+      <div className="mb-3 border-b border-tinta/10 pb-2.5 lg:hidden">
         <Volver to="/estudiante">Mi cuaderno</Volver>
-        <h1 className="mt-2 min-w-0 break-words text-lg font-bold leading-snug text-tinta sm:text-2xl">
+        <h1 className="mt-1 min-w-0 break-words text-lg font-bold leading-snug text-tinta">
           {[tituloGrupo, ...chipsGrupo].join(' · ')}
         </h1>
       </div>
+
+      <h1 className="sr-only hidden lg:block">
+        {[tituloGrupo, ...chipsGrupo].join(' · ')}
+      </h1>
 
       {/* Navegación: pastillas (todas visibles) en móvil, barra lateral en escritorio. */}
       <div className="lg:hidden">

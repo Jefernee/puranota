@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Alerta from '../Alerta'
+import CodigoAcceso from './CodigoAcceso'
 import Modal from '../Modal'
 import EstadoVacio from '../EstadoVacio'
 import SkeletonLista from '../SkeletonLista'
@@ -11,7 +12,7 @@ import {
 import { resetearClaveEstudiante } from '../../services/perfil.service'
 
 // Lista de estudiantes del grupo con estado, aprobar pendientes y expulsar.
-export default function EstudiantesPanel({ grupoId }) {
+export default function EstudiantesPanel({ grupoId, grupo, onCambioCodigo }) {
   const [estudiantes, setEstudiantes] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
@@ -104,7 +105,9 @@ export default function EstudiantesPanel({ grupoId }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      {/* El código de acceso encabeza la matrícula: es lo que se comparte para
+          que los estudiantes entren, así que se busca justo acá. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-tinta/70">
           {estudiantes.length} matriculado{estudiantes.length === 1 ? '' : 's'}
           {pendientes > 0 && (
@@ -113,9 +116,18 @@ export default function EstudiantesPanel({ grupoId }) {
             </span>
           )}
         </p>
-        <button onClick={cargar} className="-mx-2 inline-flex min-h-[40px] items-center rounded-cuaderno px-2 text-sm text-pizarra hover:underline">
-          Actualizar
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {grupo && (
+            <CodigoAcceso
+              grupoId={grupoId}
+              codigo={grupo.codigo_acceso}
+              onCambio={onCambioCodigo}
+            />
+          )}
+          <button onClick={cargar} className="-mx-2 inline-flex min-h-[40px] items-center rounded-cuaderno px-2 text-sm text-pizarra hover:underline">
+            Actualizar
+          </button>
+        </div>
       </div>
 
       <Alerta tipo="error">{error}</Alerta>

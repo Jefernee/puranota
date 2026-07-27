@@ -12,7 +12,26 @@ import { temaActual, alternarTema } from '../lib/tema'
 //   - 'normal'   (1440px) dashboards con rejillas
 //   - 'amplio'   (1400px) vistas con barra lateral (detalle de grupo)
 //   - 'estrecho' (max-w-4xl) vistas de lectura/edición de una columna
-export default function Layout({ children, ancho = 'normal' }) {
+/**
+ * `titulo`: contexto de la página (por ejemplo el grupo en el que se está).
+ *
+ * Se muestra centrado en la barra SOLO en escritorio: en celular el logo y los
+ * dos botones ya llenan los 390px. Y como la barra es fija, el título queda a
+ * la vista mientras uno baja por una lista de 29 estudiantes, que es cuando de
+ * verdad se olvida en qué grupo está.
+ *
+ * Va con `aria-hidden` porque la página conserva su `<h1>` (en escritorio,
+ * oculto a la vista pero presente para lectores de pantalla): sin eso, el
+ * título se anunciaría dos veces.
+ */
+export default function Layout({
+  children,
+  ancho = 'normal',
+  titulo,
+  subtitulo,
+  volver,
+  acciones,
+}) {
   const { perfil, esDocente } = useAuth()
   const navigate = useNavigate()
   const [saliendo, setSaliendo] = useState(false)
@@ -45,12 +64,36 @@ export default function Layout({ children, ancho = 'normal' }) {
     <div className="min-h-screen bg-papel">
       <header className="sticky top-0 z-10 border-b border-tinta/10 bg-papel/90 backdrop-blur">
         <div className={`mx-auto flex ${maxW} items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8`}>
-          <div className="flex min-w-0 items-center gap-2.5">
+          {/* Marca → volver → dónde estoy: se lee de corrido. El distintivo de
+              ambiente se fue a la derecha con los otros indicadores; en el medio
+              cortaba ese recorrido y robaba el ancho que necesita el título. */}
+          <div className="flex min-w-0 shrink-0 items-center gap-3">
             <Logo className="text-xl" />
-            <Ambiente />
+            {volver && <span className="hidden lg:block">{volver}</span>}
           </div>
 
-          <div className="flex items-center gap-2">
+          {titulo && (
+            <p
+              aria-hidden="true"
+              title={subtitulo ? `${titulo} · ${subtitulo}` : titulo}
+              className="hidden min-w-0 flex-1 truncate px-4 text-center text-base font-bold text-tinta lg:block"
+            >
+              {titulo}
+              {/* El subtítulo solo desde 1280: en 1024 obligaba a recortar el
+                  título, y el título completo importa más que el dato de apoyo. */}
+              {subtitulo && (
+                <span className="hidden font-normal text-tinta/55 xl:inline">
+                  {' · '}
+                  {subtitulo}
+                </span>
+              )}
+            </p>
+          )}
+
+          <div className="flex shrink-0 items-center gap-2">
+            {/* Acciones propias de la página, antes de las globales. */}
+            {acciones && <span className="hidden lg:block">{acciones}</span>}
+            <Ambiente />
             <button
               type="button"
               onClick={() => setTema(alternarTema())}
