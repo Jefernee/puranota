@@ -1023,6 +1023,23 @@ Recorrido de prueba de punta a punta:
 
 ## 13. Pendientes conocidos
 
+**⏰ Zona horaria de las fechas (anotado el 2026-07-27, sin arreglar).**
+Las horas se formatean con `toLocaleDateString('es-CR', …)` y
+`toLocaleTimeString('es-CR', …)` **sin fijar `timeZone`**. El locale solo decide
+el *formato* (día/mes, coma decimal), **no la zona**: la hora se convierte a la
+del dispositivo. En un celular con la zona mal puesta, o en un docente fuera del
+país, una entrega de las 23:59 puede verse como otra hora y parecer tardía
+cuando no lo es.
+
+*Arreglo:* pasar `timeZone: 'America/Costa_Rica'` en los formateadores. Están en
+cuatro lugares — `lib/formato.js`, `components/estudiante/EvaluacionEstudiante.jsx`
+(`fechaHora`), `components/docente/AsignacionesPanel.jsx` y `lib/notas.js` (estos
+dos últimos solo formatean números, así que no les afecta). Lo correcto es
+centralizarlo en `lib/formato.js` y que nadie más llame a `toLocale*` con fechas.
+Ojo también con el `<input type="date">` del pase de lista y con `hoyLocal()`,
+que usan la fecha del dispositivo.
+
+
 **De notas:** los errores A, B y C de §7.6 están **corregidos** y con pruebas que
 los cuidan (`npm test`). Siguen abiertos D, E y F, que son advertencias, no fallas.
 

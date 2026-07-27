@@ -789,10 +789,74 @@ Ambos están detallados en [`despliegue.md`](./despliegue.md) §2.
 
 ---
 
+## Jornada del 2026-07-26 / 27 — lo que se hizo
+
+Salió casi todo de mirar el sistema con **datos masivos de verdad**. Con 2
+actividades no se veía nada; con 43 y 90 estudiantes, sí.
+
+### Piso firme
+
+| | |
+|---|---|
+| **Pruebas automáticas (D8)** | **200 comprobaciones** con Vitest, en 1,2 s. Validadas rompiendo el código a propósito: las mutaciones fueron detectadas. |
+| **Staging (D9)** | Segundo proyecto Supabase (US$0) con esquema espejo y datos masivos. Ver [`staging.md`](./staging.md). |
+| **`backend/esquema.sql`** | Espejo fiel de la base, generado desde el catálogo. Se borró el SQL viejo que llevaba meses desactualizado. |
+| **Auditoría de celular** | Script que recorre las 14 vistas en 390 px midiendo desborde, objetivos táctiles, textos recortados, letra chica y errores de consola. |
+
+### Notas y registro
+
+- **El registro del docente pasa a columnas por RUBRO** (§3.6), con el detalle
+  por actividad al desplegar la fila.
+- **Publicar las notas cuando el docente quiera** (§3.9), por periodo.
+- **El registro abre en el periodo de HOY** (§3.10) — era la causa de que la
+  asistencia "no se reflejara".
+- **El color ya no miente**: rojo solo cuando ya no le alcanza, no a mitad de
+  periodo (`estadoAprobacion`).
+- Los subtotales por rubro distinguen «sacó cero» de «todavía no le califican».
+
+### Asistencia (§3.11)
+
+- **Por lección, no por día** (Art. 37), con `grupos.lecciones_por_dia`.
+- **Fuga (F)**: reparte el día — las lecciones perdidas son ausencias
+  injustificadas; además es falta leve de conducta (Art. 154 d), que se avisa
+  pero no se gestiona.
+- **Desmarcar** tocando de nuevo el estado.
+- El resumen va **por periodo**, con la columna «Aporta a la nota».
+
+### Errores encontrados y corregidos
+
+1. **RLS**: el estudiante podía adjuntar archivos a una entrega ya calificada
+   (el `using` no cubre los INSERT; faltaba repetir la condición en el
+   `with check`).
+2. **Fuga de notas en celular**: al ocultar las calificaciones, la lista móvil
+   seguía mostrándolas — la propagación no había llegado a esa fila.
+3. **Videos**: uno que no carga quedaba como una cajita negra sin explicación.
+4. **El detector de desborde** gritaba por las tablas con scroll propio.
+5. **Objetivos táctiles**: nueve controles por debajo de 40 px y la insignia de
+   archivo en 11-12 px, bajo el mínimo de 13.
+
+### Interfaz
+
+- **El contexto del grupo vive en la barra fija** en escritorio. Regla nueva:
+  **arriba siempre el CURSO**, y el nombre de lo que estás viendo, abajo.
+- Evaluación del estudiante, Mi cuenta y el detalle de actividad, como
+  documentos formales: tarjeta, encabezado con fondo, filas alternadas.
+- El pase de lista, en una sola fila; el conteo muestra solo lo que hay.
+
+### Lo que quedó pendiente
+
+- **⏰ Zona horaria** de las fechas: ver `CLAUDE.md` §13. Es el primero de la
+  lista para mañana.
+- Del bloque 1: migración a `rubro_id` (D5), export a Excel, módulo admin y los
+  recorridos de Playwright.
+
+---
+
 ## Registro de cambios
 
 | Fecha | Cambio | Motivo |
 |---|---|---|
+| 2026-07-27 | **v4** — jornada completa arriba: pruebas, staging, notas por rubro, publicar notas, asistencia por lección y fuga, y la pasada de interfaz. Nuevos §3.9, §3.10 y §3.11. | Probar con datos masivos destapó lo que con 2 actividades no se veía |
 | 2026-07-25 | v1 inicial | Cerrar el ciclo de cambios de idea |
 | 2026-07-25 | **v3** — se agrega "Lo que ya está hecho": bloque 0 completo, despliegue en línea y las dos tandas de interfaz. Reglas nuevas en CLAUDE.md §5.5 y §5.6. | Dejar por escrito el estado real |
 | 2026-07-25 | **v2** — reescrito §3 completo: tabla de registro en vez de tarjetas y barras; una sola NOTA FINAL; vocabulario Valor%/Calificación. Nuevo §3.0 y §3.5. §8 reestructurado a 4 pestañas. | Revisión del Aula Virtual de la UISIL (capturas en `imagenes/`) |
