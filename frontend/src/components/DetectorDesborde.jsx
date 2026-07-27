@@ -9,6 +9,22 @@ import { useEffect, useState } from 'react'
 //
 // Se apaga tocando la barra.
 
+/**
+ * ¿El elemento vive dentro de algo que YA tiene su propio scroll horizontal?
+ *
+ * Una tabla ancha dentro de un contenedor con `overflow-x: auto` es lo correcto,
+ * no un error: se desplaza sola y la página no se mueve. Sin esta comprobación
+ * el detector señalaba las columnas del registro de notas como si fueran un
+ * problema, y el aviso real se perdía entre el ruido.
+ */
+function dentroDeUnScroller(el) {
+  for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+    const ov = getComputedStyle(p).overflowX
+    if (ov === 'auto' || ov === 'scroll') return true
+  }
+  return false
+}
+
 function describir(el) {
   const tag = el.tagName.toLowerCase()
   const clases = (typeof el.className === 'string' ? el.className : '')
@@ -36,6 +52,7 @@ export default function DetectorDesborde() {
         const r = el.getBoundingClientRect()
         // Se ignora lo que no ocupa espacio y los desbordes de 1px por redondeo.
         if (r.width === 0 && r.height === 0) continue
+        if (dentroDeUnScroller(el)) continue
         if (r.right > ancho + 1 || r.left < -1) {
           // Solo el elemento más profundo: si el padre también desborda, es
           // porque lo empuja el hijo.
