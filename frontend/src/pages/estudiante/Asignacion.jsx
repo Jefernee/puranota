@@ -144,6 +144,15 @@ export default function AsignacionEstudiante() {
   // Si el docente todavía no publicó las notas del periodo, acá tampoco se
   // muestran: si no, bastaba con abrir la actividad para saltarse el registro.
   const notasVisibles = notasPublicadas(asignacion.grupo, asignacion.periodo)
+
+  // El curso, armado igual que en la pantalla del grupo: materia como título y
+  // el resto como complementos.
+  const g = asignacion.grupo || {}
+  const materia = g.materia || g.nombre || 'Grupo'
+  const tituloCurso = [
+    materia,
+    ...[g.nombre !== materia ? g.nombre : null, g.especialidad, g.nivel].filter(Boolean),
+  ].join(' · ')
   const archivos = entrega?.archivos || []
   const esPrueba = asignacion.requiere_entrega === false
   const sinInfo =
@@ -154,26 +163,22 @@ export default function AsignacionEstudiante() {
   return (
     <Layout
       ancho="normal"
-      titulo={asignacion.titulo}
+      // Arriba SIEMPRE va el curso, en todos los módulos: es el contexto que no
+      // cambia mientras uno navega. El nombre de la actividad va abajo, que es
+      // donde uno lee lo que está haciendo.
+      titulo={tituloCurso}
       volver={
         <Volver to={`/estudiante/grupos/${asignacion.grupo_id}`}>Volver al grupo</Volver>
       }
-      acciones={
-        <span
-          className={`whitespace-nowrap rounded-full px-3 py-1 text-sm font-medium ${TONO_BADGE[est.tono]}`}
-        >
-          {est.etiqueta}
-        </span>
-      }
     >
-      {/* En escritorio el encabezado vive en la barra fija: así la Revisión —lo
-          primero que el estudiante busca— aparece de una, sin bajar. */}
-      <div className="mb-5 border-b border-tinta/10 pb-4 lg:hidden">
-        <Volver to={`/estudiante/grupos/${asignacion.grupo_id}`}>
-          Volver al grupo
-        </Volver>
-        <div className="mt-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-          <h1 className="min-w-0 break-words text-lg font-bold leading-snug text-tinta">
+      <div className="mb-5 border-b border-tinta/10 pb-4">
+        <div className="lg:hidden">
+          <Volver to={`/estudiante/grupos/${asignacion.grupo_id}`}>
+            Volver al grupo
+          </Volver>
+        </div>
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-2 lg:mt-0">
+          <h1 className="min-w-0 break-words text-lg font-bold leading-snug text-tinta sm:text-2xl">
             {asignacion.titulo}
           </h1>
           <span
@@ -183,8 +188,6 @@ export default function AsignacionEstudiante() {
           </span>
         </div>
       </div>
-
-      <h1 className="sr-only hidden lg:block">{asignacion.titulo}</h1>
 
       <div className="grid gap-5 lg:grid-cols-3 lg:items-start">
         {/* ── Columna izquierda: la actividad ──────────────────────────────

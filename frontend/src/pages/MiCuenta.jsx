@@ -19,23 +19,28 @@ export default function MiCuenta() {
   return (
     <Layout
       ancho="normal"
-      titulo="Mi cuenta"
+      // La barra lleva el CURSO cuando hay uno. Acá no hay: es la cuenta del
+      // usuario, no un grupo. Por eso el título va abajo, en el cuerpo.
       volver={
         <Volver to="/" atras>
           Volver
         </Volver>
       }
     >
-      <h1 className="sr-only">Mi cuenta</h1>
-
-      {/* Ficha de identidad: quién sos, en una tarjeta como el resto de la
-          pantalla. Antes era texto suelto sobre el fondo y se leía plano.
-          En celular el volver se queda acá; en escritorio vive en la barra. */}
-      <div className="mb-5 lg:hidden">
+      <div className="mb-4 lg:hidden">
         <Volver to="/" atras>
           Volver
         </Volver>
       </div>
+
+      {/* Centrado en escritorio, donde el título encabeza las tres columnas;
+          alineado a la izquierda en celular, que es una sola columna. */}
+      <h1 className="mb-4 text-xl font-bold leading-tight text-tinta sm:text-2xl lg:text-center">
+        Mi cuenta
+      </h1>
+
+      {/* Ficha de identidad: quién sos, en una tarjeta como el resto de la
+          pantalla. Antes era texto suelto sobre el fondo y se leía plano. */}
 
       <div className="tarjeta-cuaderno mb-5 flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 sm:px-5 sm:pl-7">
         <span

@@ -43,7 +43,7 @@ const FILTROS = [
   { id: 'calificada', label: 'Calificadas' },
 ]
 
-export default function RevisionAsignacion({ asignacionId, onVolver }) {
+export default function RevisionAsignacion({ asignacionId, onVolver, onCargada }) {
   const [asignacion, setAsignacion] = useState(null)
   const [filas, setFilas] = useState([]) // [{estudiante, entrega}]
   const [cargando, setCargando] = useState(true)
@@ -63,6 +63,8 @@ export default function RevisionAsignacion({ asignacionId, onVolver }) {
       const porEstudiante = new Map(entregas.map((e) => [e.estudiante_id, e]))
       const activos = estudiantes.filter((m) => m.estado === 'activo' && m.estudiante)
       setAsignacion(a)
+      // La pantalla de arriba necesita el curso para la barra superior.
+      onCargada?.(a)
       setFilas(
         activos.map((m) => ({
           estudiante: m.estudiante,
